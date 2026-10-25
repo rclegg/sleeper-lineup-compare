@@ -44,3 +44,8 @@ td.x{width:28px;text-align:right}
 ol.how{margin:0 0 14px;padding-left:20px;color:var(--mute);font-size:13px;line-height:1.55}
 ol.how li{margin-bottom:2px}ol.how b{color:var(--fg)}
 details{margin-top:16px;color:var(--mute);font-size:13px}
+
+.hint{color:var(--mute);font-size:12px;padding:8px 2px 0;opacity:.85}
+details.howto{margin:0 0 12px}
+details.howto summary{cursor:pointer;color:var(--mute);font-size:13px;font-weight:600}
+details.howto ol.how{margin:8px 0 0}

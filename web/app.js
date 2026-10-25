@@ -42,12 +42,17 @@ function render(){
     const c=document.createElement('div');c.className='team';c.style.setProperty('--c',i?'var(--b)':'var(--a)');
     const hi=stats&&t.ids.length&&totals[i]>totals[1-i];
     if(hi)c.classList.add('win');
-    const rows=t.ids.map(id=>{const p=players[id]||{n:id,p:'',t:''};const v=playerPts(id);
+    // Display order is fixed by position (then points, then name), whatever order players were added.
+    const sorted=[...t.ids].sort((x,y)=>{const px=players[x]||{},py=players[y]||{};
+      return (POS.indexOf(px.p)+1||99)-(POS.indexOf(py.p)+1||99)||(playerPts(y)||0)-(playerPts(x)||0)||String(px.n).localeCompare(py.n)});
+    const missing=POS.filter(p=>!t.ids.some(id=>(players[id]||{}).p===p));
+    const hint=t.ids.length&&missing.length?`<div class="hint">Not added yet: ${missing.join(' · ')}</div>`:'';
+    const rows=sorted.map(id=>{const p=players[id]||{n:id,p:'',t:''};const v=playerPts(id);
       return `<tr><td><div class="who"><img class="av" src="${avatar(id,p)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="pos ${p.p}">${p.p}</span><span>${esc(p.n)} <small style="color:var(--mute)">${p.t}</small></span></div></td><td class="pts">${v==null?'–':v.toFixed(2)}</td><td class="x"><button data-t="${i}" data-id="${id}" aria-label="Remove">×</button></td></tr>`}).join('');
     c.innerHTML=`<h2><input value="${esc(t.name)}" data-name="${i}" aria-label="Team name"></h2>
       <div class="total">${stats?totals[i].toFixed(2):'–'}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}"><div class="results" hidden></div></div>
-      ${rows?`<table>${rows}</table>`:'<div class="empty">No players yet. Search above to add.</div>'}`;
+      ${rows?`<table>${rows}</table>${hint}`:'<div class="empty">No players yet. Search above to add.</div>'}`;
     cols.appendChild(c)});
   const v=$('verdict');
   if(stats&&teams.every(t=>t.ids.length)){const d=totals[0]-totals[1];
@@ -157,5 +162,8 @@ $('go').addEventListener('click',score);
 const THEMES=['auto','light','dark'];
 function applyTheme(t){const r=document.documentElement;if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);$('theme').title='Theme: '+t+' (tap to change)'}
 applyTheme(load('theme','auto'));
+// Remember whether the how-it-works panel was collapsed.
+$('howto').open=load('howto_open',true);
+$('howto').addEventListener('toggle',()=>save('howto_open',$('howto').open));
 $('theme').addEventListener('click',()=>{const t=THEMES[(THEMES.indexOf(load('theme','auto'))+1)%3];save('theme',t);applyTheme(t)});
 init();

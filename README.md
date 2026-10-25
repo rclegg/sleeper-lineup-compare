@@ -2,11 +2,16 @@
 
 Compare two fantasy football lineups using your Sleeper league's own scoring rules.
 
+![Sleeper Lineup Compare](docs/screenshot.png)
+
+Live: https://d34fwrzw00qko0.cloudfront.net
+
 Pick any players for Team A and Team B, choose a season and week (or a season total), and the page scores both lineups with your league's real scoring settings. Defenses and kickers are included. The "Share link" button encodes both lineups into the URL so a friend sees the same matchup.
 
 ## How it works
 
-- One static page, no build step and no dependencies: `web/index.html`.
+- One static page, no build step and no dependencies: `web/index.html`, `web/styles.css`, `web/app.js`.
+- Enter a Sleeper username (it lists your leagues) or a league ID. There is no default league.
 - Data comes live from the public [Sleeper API](https://docs.sleeper.com/) (league scoring, player list, weekly stats). No keys needed.
 - The player list is cached in `localStorage` for a day. Lineups and preferences are saved there too.
 - Share links keep state in the URL hash (`#d=...`), so nothing is sent to a server.
@@ -21,4 +26,4 @@ Open `web/index.html` in a browser, or `python3 -m http.server -d web`.
 
 ## History
 
-Started as `ubiquitous-octo-journey`, which is kept as-is so old GitHub Pages links keep working.
+Started as `ubiquitous-octo-journey`. Its old GitHub Pages address now redirects here and keeps share-link data.

@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pip install cfn-lint && cfn-lint -i W1030 infra/site.yaml
+      - run: pip install cfn-lint && cfn-lint infra/site.yaml -i W1030

@@ -6,22 +6,22 @@
 <title>Lineup Compare</title>
 <meta name="description" content="Compare two fantasy football lineups using your Sleeper league scoring rules.">
 <style>
-:root{--bg:#f6f7f4;--card:#fff;--fg:#1b2420;--mute:#6a756f;--line:#dfe3dc;--accent:#1f6f4a;--a:#1f6f4a;--b:#b4531f;--win:#e7f3ec}
-@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1b221e;--fg:#e8eee9;--mute:#93a099;--line:#2c3631;--accent:#5fc08e;--a:#5fc08e;--b:#f0955d;--win:#1d3327}}
+:root{--bg:#f2f4f8;--card:#fff;--fg:#141824;--mute:#68738a;--line:#e1e5ee;--accent:#00a896;--a:#00a896;--b:#e8590c;--win:#e3f6f3;--on-accent:#fff;--QB:#e9195b;--RB:#00a896;--WR:#2a9fd6;--TE:#e8872b;--K:#9b51e0;--DEF:#7988a1}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1017;--card:#171b26;--fg:#f1f4fa;--mute:#8a94a9;--line:#262c3b;--accent:#00ceb8;--a:#00ceb8;--b:#ff7a45;--win:#12302d;--on-accent:#06201d;--QB:#fc2b6d;--RB:#20ceb8;--WR:#56c9f9;--TE:#fea860;--K:#bd66ff;--DEF:#7988a1}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px;max-width:900px;margin-inline:auto}
-h1{font-size:20px;margin:0 0 4px}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
 .sub{color:var(--mute);font-size:13px;margin-bottom:14px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-select,input,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+select,input,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
 button{cursor:pointer}
-button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
 .status{font-size:13px;color:var(--mute);margin-bottom:12px;min-height:18px}
 .status.err{color:#c0392b}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:620px){.cols{grid-template-columns:1fr}}
-.team{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
-.team.win{background:var(--win)}
+.team{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.team.win{background:var(--win);border-color:var(--accent)}
 .team h2{margin:0 0 8px}
 .team h2 input{width:100%;font-size:16px;font-weight:700;border:none;border-bottom:2px solid var(--c);border-radius:0;padding:4px 0;background:transparent}
 .total{font-size:34px;font-weight:700;color:var(--c);font-variant-numeric:tabular-nums;margin:4px 0 8px}
@@ -35,7 +35,12 @@ table{width:100%;border-collapse:collapse}
 td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:middle}
 td.pts{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
 td.x{width:28px;text-align:right}
-.pos{display:inline-block;min-width:28px;font-size:11px;font-weight:700;color:var(--mute)}
+.pos{display:inline-block;min-width:34px;text-align:center;font-size:10px;font-weight:800;color:#0d1017;background:var(--pc,var(--mute));border-radius:5px;padding:2px 0;margin-right:6px}
+.pos.QB{--pc:var(--QB)}.pos.RB{--pc:var(--RB)}.pos.WR{--pc:var(--WR)}.pos.TE{--pc:var(--TE)}.pos.K{--pc:var(--K)}.pos.DEF{--pc:var(--DEF)}
+.av{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:top;background:var(--line);vertical-align:middle;margin-right:8px}
+.who{display:flex;align-items:center}
+#pick{max-width:100%}
+#who{min-width:230px;flex:1}
 .x button{padding:0 6px;border:none;background:none;color:var(--mute);font-size:18px}
 .empty{color:var(--mute);font-size:13px;padding:8px 0}
 .verdict{margin:0 0 12px;font-weight:600}
@@ -44,10 +49,11 @@ details{margin-top:16px;color:var(--mute);font-size:13px}
 </head>
 <body>
 <h1>Lineup Compare</h1>
-<div class="sub">Scores any players with your Sleeper league's own scoring rules.</div>
+<div class="sub">Enter your Sleeper username or a league ID. Players are scored with that league's own rules.</div>
 
 <div class="bar">
-  <label>League ID <input id="league" size="20" inputmode="numeric"></label>
+  <input id="league" placeholder="Sleeper username or league ID" aria-label="Sleeper username or league ID" autocapitalize="off" autocomplete="off" spellcheck="false" style="min-width:230px;flex:1">
+  <select id="pick" hidden aria-label="League"></select>
   <select id="season"></select>
   <select id="week"></select>
   <button class="primary" id="go">Score</button>
@@ -104,7 +110,7 @@ function render(){
     const hi=stats&&t.ids.length&&totals[i]>totals[1-i];
     if(hi)c.classList.add('win');
     const rows=t.ids.map(id=>{const p=players[id]||{n:id,p:'',t:''};const v=playerPts(id);
-      return `<tr><td><span class="pos">${p.p}</span> ${esc(p.n)} <small style="color:var(--mute)">${p.t}</small></td><td class="pts">${v==null?'–':v.toFixed(2)}</td><td class="x"><button data-t="${i}" data-id="${id}" aria-label="Remove">×</button></td></tr>`}).join('');
+      return `<tr><td><div class="who"><img class="av" src="${avatar(id,p)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="pos ${p.p}">${p.p}</span><span>${esc(p.n)} <small style="color:var(--mute)">${p.t}</small></span></div></td><td class="pts">${v==null?'–':v.toFixed(2)}</td><td class="x"><button data-t="${i}" data-id="${id}" aria-label="Remove">×</button></td></tr>`}).join('');
     c.innerHTML=`<h2><input value="${esc(t.name)}" data-name="${i}" aria-label="Team name"></h2>
       <div class="total">${stats?totals[i].toFixed(2):'–'}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}"><div class="results" hidden></div></div>
@@ -114,6 +120,7 @@ function render(){
   if(stats&&teams.every(t=>t.ids.length)){const d=totals[0]-totals[1];
     v.textContent=Math.abs(d)<0.005?'Tied.':`${teams[d>0?0:1].name} leads by ${Math.abs(d).toFixed(2)}`}
   else v.textContent=''}
+function avatar(id,p){return p.p==='DEF'?'https://sleepercdn.com/images/team_logos/nfl/'+String(p.t||id).toLowerCase()+'.png':'https://sleepercdn.com/content/nfl/players/thumb/'+id+'.jpg'}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 $('cols').addEventListener('click',e=>{
@@ -131,13 +138,31 @@ $('cols').addEventListener('input',e=>{
   box.hidden=false});
 document.addEventListener('click',e=>{if(!e.target.closest('.search'))document.querySelectorAll('.results').forEach(r=>r.hidden=true)});
 
+const isLeagueId=v=>/^\d{12,}$/.test(v);
+let leagueId=DEFAULT_LEAGUE;
+// Accepts a league ID directly, or a username and offers that user's leagues for the chosen season.
+async function resolveLeague(){
+  const v=$('league').value.trim(),pick=$('pick'),season=$('season').value;
+  if(!v){leagueId=DEFAULT_LEAGUE;pick.hidden=true;return}
+  if(isLeagueId(v)){leagueId=v;pick.hidden=true;return}
+  status('Finding leagues for '+v+'…');
+  const u=await get('/user/'+encodeURIComponent(v));
+  if(!u||!u.user_id)throw new Error('No Sleeper user named '+v);
+  const leagues=await get(`/user/${u.user_id}/leagues/nfl/${season}`);
+  if(!leagues||!leagues.length)throw new Error(v+' has no leagues in '+season);
+  const prev=pick.value;
+  pick.innerHTML=leagues.map(l=>`<option value="${l.league_id}">${esc(l.name)}</option>`).join('');
+  if(leagues.some(l=>l.league_id===prev))pick.value=prev;
+  pick.hidden=false;leagueId=pick.value}
+$('pick').addEventListener('change',()=>{leagueId=$('pick').value;score()});
 async function score(){
   const season=$('season').value,week=$('week').value;
   save('prefs',{league:$('league').value,season,week});
   $('go').disabled=true;
   try{
+    try{await resolveLeague()}catch(e){status(e.message,true);$('go').disabled=false;return}
     status('Loading league scoring…');
-    try{const lg=await get('/league/'+$('league').value.trim());if(lg&&lg.scoring_settings)scoring=lg.scoring_settings}
+    try{const lg=await get('/league/'+leagueId);if(lg&&lg.scoring_settings)scoring=lg.scoring_settings}
     catch(e){scoring=FALLBACK;status('Could not read league; using saved scoring.',true)}
     status('Loading stats…');
     if(week==='all'){
@@ -168,7 +193,7 @@ async function init(){
   render();
   if(shared&&index.length)score()}
 function shareState(){
-  const d={t:teams.map(t=>({n:t.name,i:t.ids})),s:$('season').value,w:$('week').value,l:$('league').value.trim()};
+  const d={t:teams.map(t=>({n:t.name,i:t.ids})),s:$('season').value,w:$('week').value,l:leagueId};
   return btoa(unescape(encodeURIComponent(JSON.stringify(d))))}
 $('share').addEventListener('click',async()=>{
   const url=location.href.split('#')[0]+'#d='+encodeURIComponent(shareState());

@@ -44,12 +44,18 @@ td.x{width:28px;text-align:right}
 .x button{padding:0 6px;border:none;background:none;color:var(--mute);font-size:18px}
 .empty{color:var(--mute);font-size:13px;padding:8px 0}
 .verdict{margin:0 0 12px;font-weight:600}
+ol.how{margin:0 0 14px;padding-left:20px;color:var(--mute);font-size:13px;line-height:1.5}
 details{margin-top:16px;color:var(--mute);font-size:13px}
 </style>
 </head>
 <body>
 <h1>Lineup Compare</h1>
-<div class="sub">Enter your Sleeper username or a league ID. Players are scored with that league's own rules.</div>
+<div class="sub">Scores players with your Sleeper league's own rules.</div>
+<ol class="how">
+  <li>Enter your Sleeper username or a league ID. A username lists your leagues so you can pick one.</li>
+  <li>Add players to Team A and Team B.</li>
+  <li>Choose a season and week, then tap Score.</li>
+</ol>
 
 <div class="bar">
   <input id="league" placeholder="Sleeper username or league ID" aria-label="Sleeper username or league ID" autocapitalize="off" autocomplete="off" spellcheck="false" style="min-width:230px;flex:1">
@@ -71,10 +77,8 @@ details{margin-top:16px;color:var(--mute);font-size:13px}
 
 <script>
 const API='https://api.sleeper.app/v1';
-const DEFAULT_LEAGUE='1359642996819116032';
-const FALLBACK={sack:1,fgm_40_49:4,pass_int:-2,pts_allow_0:10,pass_2pt:2,st_td:6,rec_td:6,fgm_30_39:3,fgm_50_59:5,xpmiss:-1,rush_td:6,rec_2pt:2,st_fum_rec:1,ff:1,fgmiss_30_39:-1,rec:0.5,pts_allow_14_20:1,fgm_0_19:3,int:2,def_st_fum_rec:1,fum_lost:-2,pts_allow_1_6:7,fgm_60p:6,fgmiss_20_29:-1,fgm_20_29:3,pts_allow_21_27:0,xpm:1,fgmiss_0_19:-1,rush_2pt:2,fum_rec:2,def_st_td:6,def_td:6,safe:2,pass_yd:0.04,blk_kick:2,pass_td:4,rush_yd:0.1,pts_allow_28_34:-1,pts_allow_35p:-4,fum_rec_td:6,rec_yd:0.1,def_st_ff:1,pts_allow_7_13:4,st_ff:1};
 const POS=['QB','RB','WR','TE','K','DEF'];
-let players={}, index=[], scoring=FALLBACK, stats=null;
+let players={}, index=[], scoring={}, stats=null;
 let teams=load('teams',[{name:'Team A',ids:[]},{name:'Team B',ids:[]}]);
 const $=id=>document.getElementById(id);
 
@@ -139,11 +143,11 @@ $('cols').addEventListener('input',e=>{
 document.addEventListener('click',e=>{if(!e.target.closest('.search'))document.querySelectorAll('.results').forEach(r=>r.hidden=true)});
 
 const isLeagueId=v=>/^\d{12,}$/.test(v);
-let leagueId=DEFAULT_LEAGUE;
+let leagueId='';
 // Accepts a league ID directly, or a username and offers that user's leagues for the chosen season.
 async function resolveLeague(){
   const v=$('league').value.trim(),pick=$('pick'),season=$('season').value;
-  if(!v){leagueId=DEFAULT_LEAGUE;pick.hidden=true;return}
+  if(!v){pick.hidden=true;throw new Error('Enter your Sleeper username or a league ID first.')}
   if(isLeagueId(v)){leagueId=v;pick.hidden=true;return}
   status('Finding leagues for '+v+'…');
   const u=await get('/user/'+encodeURIComponent(v));
@@ -151,19 +155,21 @@ async function resolveLeague(){
   const leagues=await get(`/user/${u.user_id}/leagues/nfl/${season}`);
   if(!leagues||!leagues.length)throw new Error(v+' has no leagues in '+season);
   const prev=pick.value;
-  pick.innerHTML=leagues.map(l=>`<option value="${l.league_id}">${esc(l.name)}</option>`).join('');
+  pick.innerHTML=(leagues.length>1?'<option value="">Choose a league…</option>':'')+leagues.map(l=>`<option value="${l.league_id}">${esc(l.name)}</option>`).join('');
   if(leagues.some(l=>l.league_id===prev))pick.value=prev;
-  pick.hidden=false;leagueId=pick.value}
+  pick.hidden=false;leagueId=pick.value;
+  if(!leagueId)throw new Error(`${v} has ${leagues.length} leagues. Choose one from the list.`)}
 $('pick').addEventListener('change',()=>{leagueId=$('pick').value;score()});
 async function score(){
   const season=$('season').value,week=$('week').value;
   save('prefs',{league:$('league').value,season,week});
   $('go').disabled=true;
   try{
-    try{await resolveLeague()}catch(e){status(e.message,true);$('go').disabled=false;return}
+    try{await resolveLeague()}catch(e){status(e.message,true);stats=null;$('go').disabled=false;render();return}
     status('Loading league scoring…');
-    try{const lg=await get('/league/'+leagueId);if(lg&&lg.scoring_settings)scoring=lg.scoring_settings}
-    catch(e){scoring=FALLBACK;status('Could not read league; using saved scoring.',true)}
+    const lg=await get('/league/'+leagueId);
+    if(!lg||!lg.scoring_settings)throw new Error('No league found for that ID');
+    scoring=lg.scoring_settings;
     status('Loading stats…');
     if(week==='all'){
       const maxW=+week_max();const arr=await Promise.all(Array.from({length:maxW},(_,i)=>get(`/stats/nfl/regular/${season}/${i+1}`).catch(()=>({}))));
@@ -179,7 +185,7 @@ async function init(){
   const shared=readShared();
   if(shared){teams=shared.t.map((t,i)=>({name:String(t.n||('Team '+'AB'[i])),ids:(Array.isArray(t.i)?t.i:[]).map(String)}));
     if(shared.s)pref.season=shared.s;if(shared.w)pref.week=shared.w;if(shared.l)pref.league=shared.l}
-  $('league').value=pref.league||DEFAULT_LEAGUE;
+  $('league').value=pref.league||'';
   let cs=new Date().getFullYear(),cw=1;
   try{const st=await get('/state/nfl');cs=+st.season;cw=+st.display_week||+st.week||1;window._curSeason=String(cs);window._curWeek=cw}catch(e){}
   const sel=$('season');for(let y=cs;y>=cs-3;y--)sel.add(new Option(y,y));

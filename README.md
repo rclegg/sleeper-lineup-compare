@@ -18,7 +18,7 @@ Pick any players for Team A and Team B, choose a season and week (or a season to
 
 ## Deploy
 
-Hosted on private S3 behind CloudFront using [aws-static-site-template](https://github.com/rclegg/aws-static-site-template): plain CloudFormation (`infra/site.yaml`) and a GitHub OIDC role, with no stored keys. Pushing to `main` runs `.github/workflows/deploy.yml`.
+Hosted on private S3 behind CloudFront. The stack is plain CloudFormation in the infra repo; pushing to `main` runs `.github/workflows/deploy.yml`, which syncs `web/` using a GitHub OIDC role, with no stored keys.
 
 ## Run locally
 

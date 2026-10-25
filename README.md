@@ -1,4 +1,4 @@
-# Lineup Compare
+# Sleeper Lineup Compare
 
 Compare two fantasy football lineups using your Sleeper league's own scoring rules.
 

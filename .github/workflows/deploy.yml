@@ -10,9 +10,9 @@ permissions:
 jobs:
   deploy:
     uses: rclegg/aws-static-site-template/.github/workflows/deploy-static-site.yml@main
+    secrets: inherit
     with:
       stack-name: sleeper-lineup-compare
-      role-arn: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-sleeper-lineup-compare
       aws-region: us-east-1
       template: infra/site.yaml
       site-dir: web

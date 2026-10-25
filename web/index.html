@@ -166,7 +166,19 @@ async function resolveLeague(){
   if(leagues.some(l=>l.league_id===prev))pick.value=prev;
   pick.hidden=false;leagueId=pick.value;
   if(!leagueId)throw new Error(`${v} has ${leagues.length} leagues. Choose one from the list.`)}
-$('pick').addEventListener('change',()=>{leagueId=$('pick').value;score()});
+$('pick').addEventListener('change',()=>{leagueId=$('pick').value;if(leagueId)score()});
+// Look up leagues as soon as the user stops typing, so the picker is ready before scoring.
+let lookupTimer;
+function lookupLeagues(){
+  clearTimeout(lookupTimer);
+  lookupTimer=setTimeout(async()=>{
+    const v=$('league').value.trim();
+    if(!v||isLeagueId(v)){$('pick').hidden=true;if(isLeagueId(v))leagueId=v;return}
+    try{await resolveLeague();status('Choose a league, then add players and tap Score.')}
+    catch(e){status(e.message)}},600)}
+$('league').addEventListener('input',()=>{$('pick').hidden=true;leagueId='';lookupLeagues()});
+$('league').addEventListener('keydown',e=>{if(e.key==='Enter')score()});
+$('season').addEventListener('change',()=>{const v=$('league').value.trim();if(v&&!isLeagueId(v)){$('pick').value='';lookupLeagues()}});
 async function score(){
   const season=$('season').value,week=$('week').value;
   save('prefs',{league:$('league').value,season,week});
@@ -204,7 +216,7 @@ async function init(){
     status('Ready. Add players to each team, then tap Score.')}
   catch(e){status('Could not load players: '+e.message,true)}
   render();
-  if(shared&&index.length)score()}
+  if(shared&&index.length)score();else lookupLeagues()}
 function shareState(){
   const d={t:teams.map(t=>({n:t.name,i:t.ids})),s:$('season').value,w:$('week').value,l:leagueId};
   return btoa(unescape(encodeURIComponent(JSON.stringify(d))))}

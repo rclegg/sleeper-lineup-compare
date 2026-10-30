@@ -1,7 +1,7 @@
 // Projected points for weeks that haven't been played yet, scored with the league's own rules.
 // Uses Sleeper's undocumented projections endpoint; any failure just means no projections.
 import { state } from './state.js';
-import { points } from './scoring.js';
+import { points, playerPoints } from './scoring.js';
 
 const HOST = 'https://api.sleeper.app';
 
@@ -48,3 +48,6 @@ export const isProjected = id => !!state.proj && !hasPlayed(id);
 export function projectedPoints(id) {
   return state.proj ? points(state.proj[id]) : null;
 }
+
+// Points to show for a player: actual once a stat line exists, projected for those yet to play.
+export const shownPoints = id => isProjected(id) ? projectedPoints(id) : playerPoints(id);

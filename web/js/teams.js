@@ -5,14 +5,11 @@ import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
 import { benchHtml, initBench } from './bench.js';
-import { projectedPoints, isProjected } from './projections.js';
+import { projectedPoints, isProjected, shownPoints } from './projections.js';
 import { lookupRoster, applyMember } from './roster.js';
 import { weekStarters } from './members.js';
 
 const MAX_RESULTS = 12;
-
-// Actual points once a player has a recorded stat line; projections only for those who haven't played yet.
-const shownPoints = id => isProjected(id) ? projectedPoints(id) : playerPoints(id);
 
 // Team total: plain when everything is actual; "scored / projected" when some players haven't played yet.
 function totalHtml(ids, projectedTotal) {

@@ -104,3 +104,12 @@ button#go{background:none}
 .strip button{min-width:44px;min-height:40px;padding:0;font-size:20px;line-height:1;border:none;background:none}
 .strip button:disabled{opacity:.35;cursor:default}
 #wk-label{flex:1;text-align:center;font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}
+/* What-if bench and free agents */
+details.bench{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;color:var(--fg)}
+details.bench summary{cursor:pointer;font-weight:600;font-size:13px;min-height:32px;display:flex;align-items:center}
+details.bench ul{list-style:none;margin:0;padding:0}
+details.bench li{display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}
+.bn{flex:1;min-width:0;overflow-wrap:anywhere}.bn small{color:var(--mute)}
+.bp{font-variant-numeric:tabular-nums;font-weight:600}
+details.bench li button{min-width:36px;min-height:36px;padding:0;font-size:18px;color:var(--accent);font-weight:700}
+.fapos{margin:2px 0 6px;font-size:13px}

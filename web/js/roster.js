@@ -87,15 +87,15 @@ export async function autofillFromLeague(render) {
   if (!autofillOn() || !state.userId) return;
   const me = state.members.find(m => m.userId === state.userId);
   if (!me) return;
-  applyMember(0, me);
+  applyMember(0, me, true);
   render();
+  // Team B is this week's opponent (not the scoring week, which defaults to last week).
+  const season = document.getElementById('season').value;
+  const picked = document.getElementById('week').value;
+  const week = season === state.currentSeason && state.currentWeek ? state.currentWeek : picked === 'all' ? 1 : picked;
   let opponent = null;
-  if (!state.teams[1].ids.length) {
-    const picked = document.getElementById('week').value;
-    const week = picked === 'all' ? state.currentWeek || 1 : picked;
-    try { opponent = await opponentOf(me.rosterId, week); } catch (e) { /* no matchup data */ }
-    if (opponent) applyMember(1, opponent);
-  }
+  try { opponent = await opponentOf(me.rosterId, week); } catch (e) { /* no matchup data */ }
+  if (opponent) applyMember(1, opponent, true);
   render();
   status(opponent ? `${me.name} vs ${opponent.name}` : `Loaded ${me.name}'s starting lineup.`);
 }

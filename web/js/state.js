@@ -8,6 +8,9 @@ export const state = {
   stats: null,   // one week's stats keyed by player id, an array of those for "all weeks", or null before scoring
   teams: load('teams', [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }]),
   leagueId: '',
+  userId: '',         // Sleeper user_id when the league box holds a username (not a league ID)
+  members: [],        // the loaded league's managers: { rosterId, userId, name, owner, starters }
+  membersFor: '',
   currentSeason: '',  // from /state/nfl, used to cap "all weeks" at the weeks played so far
   currentWeek: 0,
 };

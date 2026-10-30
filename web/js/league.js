@@ -4,7 +4,8 @@ import { state } from './state.js';
 import { get } from './sleeper.js';
 import { save } from './storage.js';
 import { render } from './teams.js';
-import { fillTeamA } from './roster.js';
+import { autofillFromLeague } from './roster.js';
+import { loadMembers } from './members.js';
 
 const isLeagueId = v => /^\d{12,}$/.test(v);
 const LOOKUP_DELAY_MS = 600;
@@ -21,12 +22,14 @@ async function resolveLeague() {
   }
   if (isLeagueId(input)) {
     state.leagueId = input;
+    state.userId = '';
     pick.hidden = true;
     return;
   }
   status('Finding leagues for ' + input + '…');
   const user = await get('/user/' + encodeURIComponent(input));
   if (!user || !user.user_id) throw new Error('No Sleeper user named ' + input);
+  state.userId = user.user_id;
   const leagues = await get(`/user/${user.user_id}/leagues/nfl/${season}`);
   if (!leagues || !leagues.length) throw new Error(input + ' has no leagues in ' + season);
 
@@ -39,22 +42,26 @@ async function resolveLeague() {
   if (!state.leagueId) throw new Error(`${input} has ${leagues.length} leagues. Choose one from the list.`);
 }
 
+// Once a league is chosen: load its managers, optionally autofill both teams, then score.
+async function leagueReady(fill) {
+  try { await loadMembers(state.leagueId); } catch (e) { /* manager picker just stays empty */ }
+  render();
+  if (fill) await autofillFromLeague(render);
+  score();
+}
+
 // Look up leagues as soon as the user stops typing, so the picker is ready before scoring.
 let lookupTimer;
-// fill: the user just typed or changed the username, so also autofill Team A (not on page load).
+// fill: the user just typed or changed the username/league, so also autofill the teams (not on page load).
 export function lookupLeagues(fill) {
   clearTimeout(lookupTimer);
   lookupTimer = setTimeout(async () => {
     const input = $('league').value.trim();
-    if (!input || isLeagueId(input)) {
-      $('pick').hidden = true;
-      if (isLeagueId(input)) state.leagueId = input;
-      return;
-    }
+    if (!input) { $('pick').hidden = true; return; }
     try {
       await resolveLeague();
-      if (fill && state.leagueId) fillTeamA(input, render);
-      else status('Choose a league, then add players and tap Score.');
+      if (fill) leagueReady(true);
+      else loadMembers(state.leagueId).catch(() => {}).then(() => { render(); score(); });
     } catch (e) {
       status(e.message);
     }
@@ -68,7 +75,7 @@ function lastWeek() {
 
 function finishScoring() {
   $('go').disabled = false;
-  $('go').textContent = 'Score';
+  $('go').textContent = 'Refresh scores';
   $('cols').classList.remove('busy');
 }
 
@@ -113,22 +120,22 @@ export async function score() {
 export function initLeagueControls() {
   $('pick').addEventListener('change', () => {
     state.leagueId = $('pick').value;
-    if (state.leagueId) {
-      fillTeamA($('league').value.trim(), render);
-      score();
-    }
+    if (state.leagueId) leagueReady(true);
   });
   $('league').addEventListener('input', () => {
     $('pick').hidden = true;
     state.leagueId = '';
     lookupLeagues(true);
   });
-  $('league').addEventListener('keydown', e => { if (e.key === 'Enter') score(); });
+  $('league').addEventListener('keydown', e => { if (e.key === 'Enter') lookupLeagues(true); });
+  $('week').addEventListener('change', () => { if (state.leagueId) score(); });
   $('season').addEventListener('change', () => {
     const input = $('league').value.trim();
     if (input && !isLeagueId(input)) {
       $('pick').value = '';
       lookupLeagues(true);
+    } else if (state.leagueId) {
+      score();
     }
   });
   $('go').addEventListener('click', score);

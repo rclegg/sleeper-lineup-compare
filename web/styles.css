@@ -9,7 +9,6 @@ body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-appl
 .top button{border-radius:50%;width:36px;height:36px;padding:0;font-size:16px}
 h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
 .sub{color:var(--mute);font-size:13px;margin-bottom:14px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 select,input,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
 button{cursor:pointer}
 button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
@@ -58,8 +57,6 @@ button,select,input[type=checkbox]{touch-action:manipulation}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .team h2 input:focus-visible{outline:none;border-bottom-color:var(--fg)}
 .top button{font-size:18px;line-height:1}
-.bar{margin-bottom:8px}
-.bar select,.bar button,.bar input{min-height:40px}
 .tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .tools button{padding:6px 12px;font-size:13px}
 .auto{display:flex;align-items:center;margin:0;font-size:13px;color:var(--mute);cursor:pointer}
@@ -79,10 +76,24 @@ td.x button{min-width:36px;min-height:36px}
 .who span:last-child{min-width:0;overflow-wrap:anywhere}
 @media(max-width:620px){
   body{padding:12px}
-  .bar #league{flex:1 1 100%}
-  .bar #pick{flex:1 1 100%}
-  .bar #season,.bar #week{flex:1 1 0;min-width:0}
-  .bar #go{flex:1 1 100%;min-height:44px;font-size:16px}
   .total{font-size:30px}
   .verdict{position:sticky;top:8px;z-index:4;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+}
+
+/* Setup panel and manager picker */
+.setup{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.grow{flex:1 1 220px}
+.field label{font-size:12px;font-weight:600;color:var(--mute)}
+.field label small{font-weight:400}
+.field input,.field select{width:100%;min-height:40px}
+.field:has(#pick[hidden]){display:none}
+.btns{display:flex;gap:8px}
+button#go{background:none}
+.fill{width:100%;margin:0 0 6px;font-size:13px;color:var(--mute)}
+@media(max-width:620px){
+  .setup .field.grow{flex-basis:100%}
+  .setup .field:nth-last-child(-n+2){flex:1 1 40%}
+  .tools{flex-direction:column;align-items:stretch}
+  .btns button{flex:1}
 }

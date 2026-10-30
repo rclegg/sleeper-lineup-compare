@@ -4,6 +4,7 @@ import { status } from './util.js';
 import { state } from './state.js';
 import { get } from './sleeper.js';
 import { save, load } from './storage.js';
+import { opponentOf } from './members.js';
 
 const LOOKUP_DELAY_MS = 700;
 export const autofillOn = () => load('autofill', true) !== false;
@@ -68,10 +69,35 @@ export function lookupRoster(teamIndex, render) {
   timers[teamIndex] = setTimeout(() => fillTeam(teamIndex, name, ticket, render), LOOKUP_DELAY_MS);
 }
 
-// Fills Team A from the username typed in the league box (once its league is chosen).
-export function fillTeamA(username, render) {
-  if (!autofillOn() || !username) return;
-  fillTeam(0, username, (latest[0] = (latest[0] || 0) + 1), render);
+const DEFAULT_NAME = /^team [ab]$/i;
+
+// "0" marks an empty slot; ids missing from the player list (e.g. IDP) are skipped.
+const playable = ids => ids.filter(id => id !== '0' && state.players[id]);
+
+// Puts a league manager's starters into a team. The name follows unless the user chose their own.
+export function applyMember(teamIndex, member, force) {
+  const team = state.teams[teamIndex];
+  team.ids = playable(member.starters);
+  if (force || DEFAULT_NAME.test(team.name.trim())) team.name = member.name;
+  save('teams', state.teams);
+}
+
+// With a username in the league box: Team A becomes that manager and Team B their opponent this week.
+export async function autofillFromLeague(render) {
+  if (!autofillOn() || !state.userId) return;
+  const me = state.members.find(m => m.userId === state.userId);
+  if (!me) return;
+  applyMember(0, me);
+  render();
+  let opponent = null;
+  if (!state.teams[1].ids.length) {
+    const picked = document.getElementById('week').value;
+    const week = picked === 'all' ? state.currentWeek || 1 : picked;
+    try { opponent = await opponentOf(me.rosterId, week); } catch (e) { /* no matchup data */ }
+    if (opponent) applyMember(1, opponent);
+  }
+  render();
+  status(opponent ? `${me.name} vs ${opponent.name}` : `Loaded ${me.name}'s starting lineup.`);
 }
 
 export function initAutofillToggle() {

@@ -12,23 +12,22 @@
 <div class="sub">Scores players with your Sleeper league's own rules.</div>
 <details id="howto" class="howto" open><summary>How it works</summary>
 <ol class="how">
-  <li><b>Find your league.</b> Type your Sleeper username to pick from your leagues, or paste a league ID. Scoring rules come from that league.</li>
-  <li><b>Build two lineups.</b> Search a name under Team A and Team B. Include kickers and defenses. Rename the teams if you like.</li>
-  <li><b>Pick a time frame and tap Score.</b> Choose a week, or "Season total" to add up every week. The higher total is highlighted.</li>
-  <li><b>Share it.</b> "Share link" copies a URL with both lineups so a friend sees the same matchup.</li>
+  <li><b>Enter your Sleeper username.</b> Pick your league if you have more than one. Team A fills with your starters and Team B with this week's opponent.</li>
+  <li><b>Change anything.</b> Pick another manager in a team's "Fill from" list, search to add or remove players, or choose a different week.</li>
+  <li><b>Scores update on their own</b> using your league's scoring rules. "Share link" sends the matchup to a friend.</li>
 </ol>
 </details>
 
-<div class="bar">
-  <input id="league" placeholder="Sleeper username or league ID" aria-label="Sleeper username or league ID" autocapitalize="off" autocomplete="off" spellcheck="false" style="min-width:230px;flex:1">
-  <select id="pick" hidden aria-label="League"></select>
-  <select id="season"></select>
-  <select id="week"></select>
-  <button class="primary" id="go">Score</button>
-</div>
+<section class="setup" aria-label="League setup">
+  <div class="field grow"><label for="league">Sleeper username <small>or league ID</small></label>
+    <input id="league" placeholder="e.g. your Sleeper username" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
+  <div class="field grow"><select id="pick" hidden aria-label="League"></select></div>
+  <div class="field"><label for="season">Season</label><select id="season"></select></div>
+  <div class="field"><label for="week">Week</label><select id="week"></select></div>
+</section>
 <div class="tools">
-  <label class="auto"><input type="checkbox" id="autofill" checked> Autofill lineups from a Sleeper username</label>
-  <button id="share">Share link</button>
+  <label class="auto"><input type="checkbox" id="autofill" checked> Autofill my lineup and opponent</label>
+  <span class="btns"><button id="go">Refresh scores</button><button id="share">Share link</button></span>
 </div>
 <div class="status" id="status" role="status" aria-live="polite">Loading players…</div>
 <input id="shareurl" readonly hidden aria-label="Share link" style="width:100%;margin-bottom:12px">

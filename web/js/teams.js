@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
-import { lookupRoster } from './roster.js';
+import { lookupRoster, applyMember } from './roster.js';
 
 const MAX_RESULTS = 12;
 
@@ -51,7 +51,12 @@ function teamColumn(team, i, totals) {
   const hint = team.ids.length && missing.length ? `<div class="hint">Not added yet: ${missing.join(' · ')}</div>` : '';
   const rows = sortedLineup(team.ids).map(id => playerRow(i, id)).join('');
 
+  const fill = state.members.length
+    ? `<select class="fill" data-fill="${i}" aria-label="Fill team ${'AB'[i]} from a league manager"><option value="">Fill from a league manager…</option>`
+      + state.members.map(m => `<option value="${m.rosterId}">${esc(m.name)}${m.owner && m.owner !== m.name ? ' (' + esc(m.owner) + ')' : ''}</option>`).join('') + '</select>'
+    : '';
   col.innerHTML = `<h2><input value="${esc(team.name)}" data-name="${i}" aria-label="Team ${'AB'[i]} name"></h2>
+      ${fill}
       <div class="total">${state.stats ? totals[i].toFixed(2) : '–'}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}" aria-label="Search players to add to team ${'AB'[i]}" autocomplete="off"><div class="results" hidden></div></div>
       ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}`;
@@ -87,6 +92,13 @@ export function initTeamEditing() {
     }
     const result = e.target.closest('.results div[data-id]');
     if (result) addPlayer(+result.dataset.t, result.dataset.id);
+  });
+
+  $('cols').addEventListener('change', e => {
+    if (e.target.dataset.fill == null || !e.target.value) return;
+    const member = state.members.find(m => String(m.rosterId) === e.target.value);
+    if (member) applyMember(+e.target.dataset.fill, member, true);
+    render();
   });
 
   // Adds a player, then puts the cursor back in that team's search box for the next one.

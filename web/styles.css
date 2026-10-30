@@ -49,3 +49,6 @@ details{margin-top:16px;color:var(--mute);font-size:13px}
 details.howto{margin:0 0 12px}
 details.howto summary{cursor:pointer;color:var(--mute);font-size:13px;font-weight:600}
 details.howto ol.how{margin:8px 0 0}
+
+.auto{display:block;margin:0 0 8px;font-size:13px;color:var(--mute)}
+.auto input{margin-right:6px}

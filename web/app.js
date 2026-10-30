@@ -9,6 +9,7 @@ import { render, initTeamEditing } from './js/teams.js';
 import { initLeagueControls, lookupLeagues, score } from './js/league.js';
 import { readShared, initShare } from './js/share.js';
 import { initTheme } from './js/theme.js';
+import { initAutofillToggle } from './js/roster.js';
 
 const SEASONS_SHOWN = 4;
 const WEEKS_IN_SEASON = 18;
@@ -63,5 +64,6 @@ async function init() {
 initTeamEditing();
 initLeagueControls();
 initShare();
+initAutofillToggle();
 initTheme();
 init();

@@ -4,6 +4,7 @@ import { state } from './state.js';
 import { get } from './sleeper.js';
 import { save } from './storage.js';
 import { render } from './teams.js';
+import { fillTeamA } from './roster.js';
 
 const isLeagueId = v => /^\d{12,}$/.test(v);
 const LOOKUP_DELAY_MS = 600;
@@ -40,7 +41,8 @@ async function resolveLeague() {
 
 // Look up leagues as soon as the user stops typing, so the picker is ready before scoring.
 let lookupTimer;
-export function lookupLeagues() {
+// fill: the user just typed or changed the username, so also autofill Team A (not on page load).
+export function lookupLeagues(fill) {
   clearTimeout(lookupTimer);
   lookupTimer = setTimeout(async () => {
     const input = $('league').value.trim();
@@ -51,7 +53,8 @@ export function lookupLeagues() {
     }
     try {
       await resolveLeague();
-      status('Choose a league, then add players and tap Score.');
+      if (fill && state.leagueId) fillTeamA(input, render);
+      else status('Choose a league, then add players and tap Score.');
     } catch (e) {
       status(e.message);
     }
@@ -102,19 +105,22 @@ export async function score() {
 export function initLeagueControls() {
   $('pick').addEventListener('change', () => {
     state.leagueId = $('pick').value;
-    if (state.leagueId) score();
+    if (state.leagueId) {
+      fillTeamA($('league').value.trim(), render);
+      score();
+    }
   });
   $('league').addEventListener('input', () => {
     $('pick').hidden = true;
     state.leagueId = '';
-    lookupLeagues();
+    lookupLeagues(true);
   });
   $('league').addEventListener('keydown', e => { if (e.key === 'Enter') score(); });
   $('season').addEventListener('change', () => {
     const input = $('league').value.trim();
     if (input && !isLeagueId(input)) {
       $('pick').value = '';
-      lookupLeagues();
+      lookupLeagues(true);
     }
   });
   $('go').addEventListener('click', score);

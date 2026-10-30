@@ -3,9 +3,11 @@
 import { status } from './util.js';
 import { state } from './state.js';
 import { get } from './sleeper.js';
-import { save } from './storage.js';
+import { save, load } from './storage.js';
 
 const LOOKUP_DELAY_MS = 700;
+export const autofillOn = () => load('autofill', true) !== false;
+
 const timers = [];
 const latest = [];
 
@@ -39,26 +41,41 @@ async function startersFor(name, season) {
   return roster ? { ids: roster.starters || [], who: owner.display_name || name } : null;
 }
 
+// Looks the name up and, if it resolves and this is still the latest request, fills the team.
+async function fillTeam(teamIndex, name, ticket, render) {
+  try {
+    const season = document.getElementById('season').value;
+    const found = await startersFor(name, season);
+    if (ticket !== latest[teamIndex] || !found) return;
+    if (found.error) { status(found.error); return; }
+    // "0" marks an empty slot; ids missing from the player list (e.g. IDP) are skipped.
+    const ids = found.ids.filter(id => id !== '0' && state.players[id]);
+    if (!ids.length) { status(`${found.who} has no starters set.`); return; }
+    state.teams[teamIndex].ids = ids;
+    if (/^team [ab]$/i.test(state.teams[teamIndex].name.trim())) state.teams[teamIndex].name = found.who;
+    save('teams', state.teams);
+    render();
+    status(`Loaded ${found.who}'s starting lineup.`);
+  } catch (e) { /* offline or API hiccup: leave the lineup alone */ }
+}
+
 // Called as a team name is typed. Debounced; a later keystroke cancels an in-flight result.
 export function lookupRoster(teamIndex, render) {
   clearTimeout(timers[teamIndex]);
   const name = state.teams[teamIndex].name.trim();
   const ticket = (latest[teamIndex] = (latest[teamIndex] || 0) + 1);
-  if (!name || /^team [ab]$/i.test(name)) return;
+  if (!autofillOn() || !name || /^team [ab]$/i.test(name)) return;
+  timers[teamIndex] = setTimeout(() => fillTeam(teamIndex, name, ticket, render), LOOKUP_DELAY_MS);
+}
 
-  timers[teamIndex] = setTimeout(async () => {
-    try {
-      const season = document.getElementById('season').value;
-      const found = await startersFor(name, season);
-      if (ticket !== latest[teamIndex] || !found) return;
-      if (found.error) { status(found.error); return; }
-      // "0" marks an empty slot; ids missing from the player list (e.g. IDP) are skipped.
-      const ids = found.ids.filter(id => id !== '0' && state.players[id]);
-      if (!ids.length) { status(`${found.who} has no starters set.`); return; }
-      state.teams[teamIndex].ids = ids;
-      save('teams', state.teams);
-      render();
-      status(`Loaded ${found.who}'s starting lineup.`);
-    } catch (e) { /* offline or API hiccup: leave the lineup alone */ }
-  }, LOOKUP_DELAY_MS);
+// Fills Team A from the username typed in the league box (once its league is chosen).
+export function fillTeamA(username, render) {
+  if (!autofillOn() || !username) return;
+  fillTeam(0, username, (latest[0] = (latest[0] || 0) + 1), render);
+}
+
+export function initAutofillToggle() {
+  const box = document.getElementById('autofill');
+  box.checked = autofillOn();
+  box.addEventListener('change', () => save('autofill', box.checked));
 }

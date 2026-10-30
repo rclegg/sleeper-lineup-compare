@@ -16,7 +16,7 @@ import { initStrip } from './js/strip.js';
 const SEASONS_SHOWN = 4;
 const WEEKS_IN_SEASON = 18;
 
-// Fills the season/week pickers, defaulting to the current season and last completed week.
+// Fills the season/week pickers, defaulting to the current season and week.
 async function setupPickers(pref) {
   let season = new Date().getFullYear(), week = 1;
   try {
@@ -34,11 +34,13 @@ async function setupPickers(pref) {
   const weekSel = $('week');
   weekSel.add(new Option('Season total', 'all'));
   for (let i = 1; i <= WEEKS_IN_SEASON; i++) weekSel.add(new Option('Week ' + i, i));
-  weekSel.value = pref.week || Math.max(1, week - 1);
+  weekSel.value = pref.week || Math.max(1, week);
 }
 
 async function init() {
   const pref = load('prefs', {});
+  delete pref.season;  // always open on the current NFL season and week, unless a share link says otherwise
+  delete pref.week;
   const shared = readShared();
   if (shared) {
     state.teams = shared.t.map((t, i) => ({

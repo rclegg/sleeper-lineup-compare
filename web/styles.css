@@ -30,6 +30,9 @@ button.primary{background:var(--accent);color:var(--on-accent);border-color:var(
 table{width:100%;border-collapse:collapse}
 td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:middle}
 td.pts{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+td.pts.proj{font-style:italic;font-weight:500}
+.tag{font-size:10px;font-weight:600;font-style:normal;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin-left:5px}
+.total .tag{font-size:11px;margin-left:8px}
 td.x{width:28px;text-align:right}
 .pos{display:inline-block;min-width:34px;text-align:center;font-size:10px;font-weight:800;color:#0d1017;background:var(--pc,var(--mute));border-radius:5px;padding:2px 0;margin-right:6px}
 .pos.QB{--pc:var(--QB)}.pos.RB{--pc:var(--RB)}.pos.WR{--pc:var(--WR)}.pos.TE{--pc:var(--TE)}.pos.K{--pc:var(--K)}.pos.DEF{--pc:var(--DEF)}

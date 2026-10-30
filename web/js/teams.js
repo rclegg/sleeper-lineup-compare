@@ -14,10 +14,12 @@ const MAX_RESULTS = 12;
 // Actual points once a player has a recorded stat line; projections only for those who haven't played yet.
 const shownPoints = id => isProjected(id) ? projectedPoints(id) : playerPoints(id);
 
-// Label for a team total: all projected, a mix of actual and projected, or nothing for all actual.
-function totalTag(ids) {
-  const n = ids.filter(isProjected).length;
-  return !n ? '' : `<small class="tag">${n === ids.length ? 'projected' : 'incl. proj'}</small>`;
+// Team total: plain when everything is actual; "scored / projected" when some players haven't played yet.
+function totalHtml(ids, projectedTotal) {
+  if (!state.stats && !state.proj) return '–';
+  if (!ids.some(isProjected)) return projectedTotal.toFixed(2);
+  const scored = ids.filter(id => !isProjected(id)).reduce((sum, id) => sum + (playerPoints(id) || 0), 0);
+  return `${scored.toFixed(2)}<span class="of"> / ${projectedTotal.toFixed(2)}</span><small class="tag">scored / proj</small>`;
 }
 
 // Bolds the matched part of a search result name.
@@ -69,7 +71,7 @@ function teamColumn(team, i, totals) {
     : '';
   col.innerHTML = `<h2><input value="${esc(team.name)}" data-name="${i}" aria-label="Team ${'AB'[i]} name"></h2>
       ${fill}
-      <div class="total">${state.stats || state.proj ? totals[i].toFixed(2) : '–'}${totalTag(team.ids)}</div>
+      <div class="total">${totalHtml(team.ids, totals[i])}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}" aria-label="Search players to add to team ${'AB'[i]}" autocomplete="off"><div class="results" hidden></div></div>
       ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}
       ${benchHtml(team, i)}`;

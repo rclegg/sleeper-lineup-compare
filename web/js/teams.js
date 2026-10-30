@@ -4,6 +4,7 @@ import { state } from './state.js';
 import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
+import { benchHtml, initBench } from './bench.js';
 import { lookupRoster, applyMember } from './roster.js';
 
 const MAX_RESULTS = 12;
@@ -59,7 +60,8 @@ function teamColumn(team, i, totals) {
       ${fill}
       <div class="total">${state.stats ? totals[i].toFixed(2) : '–'}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}" aria-label="Search players to add to team ${'AB'[i]}" autocomplete="off"><div class="results" hidden></div></div>
-      ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}`;
+      ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}
+      ${benchHtml(team, i)}`;
   return col;
 }
 
@@ -81,6 +83,7 @@ export function render() {
 
 export function initTeamEditing() {
   const persist = () => { save('teams', state.teams); render(); };
+  initBench(persist);
 
   $('cols').addEventListener('click', e => {
     const remove = e.target.closest('button[data-id]');

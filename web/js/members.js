@@ -10,11 +10,12 @@ export function loadMembers(leagueId) {
   if (!pending[leagueId]) {
     pending[leagueId] = Promise.all([get(`/league/${leagueId}/rosters`), get(`/league/${leagueId}/users`)])
       .then(([rosters, users]) => {
+        state.rostered = new Set((rosters || []).flatMap(r => [...(r.players || []), ...(r.reserve || []), ...(r.taxi || [])]));
         const owners = new Map((users || []).map(u => [u.user_id, u]));
         state.members = (rosters || []).filter(r => r.owner_id).map(r => {
           const u = owners.get(r.owner_id) || {};
           const owner = u.display_name || '';
-          return { rosterId: r.roster_id, userId: r.owner_id, owner, name: (u.metadata || {}).team_name || owner || 'Team ' + r.roster_id, starters: r.starters || [] };
+          return { rosterId: r.roster_id, userId: r.owner_id, owner, name: (u.metadata || {}).team_name || owner || 'Team ' + r.roster_id, starters: r.starters || [], players: r.players || [] };
         });
         state.membersFor = leagueId;
       })

@@ -46,7 +46,7 @@ export function benchHtml(team, t) {
   // Free agents are only shown for the current/upcoming week: past availability isn't something Sleeper's API gives us.
   if (state.stats && isUpcoming(document.getElementById('season').value, document.getElementById('week').value)) {
     const fa = freeAgents().filter(x => !inLineup(x.id) && (faPos === 'ALL' || (faPos === 'FLEX' ? (state.flex || ['RB', 'WR', 'TE']) : [faPos]).includes(state.players[x.id].p))).slice(0, FA_LIMIT);
-    const pick = `<select class="fapos" title="FLEX: ${(state.flex || ['RB', 'WR', 'TE']).join(', ')}" aria-label="Free agent position">${['ALL', 'FLEX', ...POS].map(p => `<option${p === faPos ? ' selected' : ''}>${p}</option>`).join('')}</select>`;
+    const pick = `<select class="fapos" title="FLEX: ${(state.flex || ['RB', 'WR', 'TE']).join(', ')}" aria-label="Free agent position">${['ALL', ...POS.slice(0, 4), 'FLEX', ...POS.slice(4)].map(p => `<option${p === faPos ? ' selected' : ''}>${p}</option>`).join('')}</select>`;
     out.push(section(t, 'fa', 'Top free agents', fa.length, pick + (fa.length ? `<ul>${fa.map(x => row(t, x)).join('')}</ul>` : '<div class="empty">No scoring free agents.</div>')));
   }
   return out.join('');

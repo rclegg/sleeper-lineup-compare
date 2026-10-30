@@ -20,6 +20,6 @@ export function initTheme() {
     save('theme', next);
     applyTheme(next);
   });
-  $('howto').open = load('howto_open', true);
-  $('howto').addEventListener('toggle', () => save('howto_open', $('howto').open));
+  $('howto').open = load('howto_open2', false);
+  $('howto').addEventListener('toggle', () => save('howto_open2', $('howto').open));
 }

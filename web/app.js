@@ -11,6 +11,7 @@ import { readShared, initShare } from './js/share.js';
 import { initImage } from './js/image.js';
 import { initTheme } from './js/theme.js';
 import { initAutofillToggle } from './js/roster.js';
+import { initScoring, setScoringChoice } from './js/scoring.js';
 import { initStrip } from './js/strip.js';
 
 const SEASONS_SHOWN = 4;
@@ -50,6 +51,7 @@ async function init() {
     if (shared.s) pref.season = shared.s;
     if (shared.w) pref.week = shared.w;
     if (shared.l) pref.league = shared.l;
+    if (shared.c) setScoringChoice(shared.c);
   }
   $('league').value = pref.league || '';
   $('clear').hidden = !$('league').value;
@@ -63,10 +65,11 @@ async function init() {
     status('Could not load players: ' + e.message, true);
   }
   render();
-  if (shared && state.index.length) score(); else lookupLeagues();
+  if ((shared || !$('league').value) && state.index.length) score(); else lookupLeagues();
 }
 
 initTeamEditing();
+initScoring(render);
 initLeagueControls();
 initShare();
 initImage();

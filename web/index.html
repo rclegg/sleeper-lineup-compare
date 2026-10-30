@@ -9,8 +9,8 @@
 </head>
 <body>
 <div class="top"><h1>Sleeper Lineup Compare</h1><button id="theme" aria-label="Switch light or dark theme" title="Switch light or dark theme">◐</button></div>
-<div class="sub">Scores players with your Sleeper league's own rules.</div>
-<details id="howto" class="howto" open><summary>How it works</summary>
+<div class="sub">Scores players with your Sleeper league's rules, or Standard, Half PPR or PPR.</div>
+<details id="howto" class="howto"><summary>How it works</summary>
 <ol class="how">
   <li><b>Enter your Sleeper username.</b> Pick your league if you have more than one. Team A fills with your starters and Team B with this week's opponent.</li>
   <li><b>Change anything.</b> Pick another manager in a team's "Fill from" list, search to add or remove players, or choose a different week.</li>
@@ -22,6 +22,7 @@
   <div class="field grow"><div class="lbl"><label for="league">Sleeper username <small>or league ID</small></label><button type="button" id="clear" class="link" hidden>Not you? Clear</button></div>
     <input id="league" placeholder="e.g. your Sleeper username" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
   <div class="field grow"><select id="pick" hidden aria-label="League"></select></div>
+  <div class="field grow"><label for="scoring">Scoring</label><select id="scoring"></select></div>
   <div class="field"><label for="season">Season</label><select id="season"></select></div>
   <div class="field"><label for="week">Week</label><select id="week"></select></div>
 </section>
@@ -29,9 +30,8 @@
   <label class="auto"><input type="checkbox" id="autofill" checked> Autofill my lineup and opponent</label>
   <span class="btns"><button id="go">Refresh scores</button><button id="share">Share link</button><button id="saveimg">Save image</button></span>
 </div>
-<div class="status" id="status" role="status" aria-live="polite">Loading players…</div>
 <input id="shareurl" readonly hidden aria-label="Share link" style="width:100%;margin-bottom:12px">
-<p class="verdict" id="verdict"></p>
+<div class="banner"><p class="verdict" id="verdict"></p><div class="status" id="status" role="status" aria-live="polite">Loading players…</div></div>
 
 <div class="strip" id="strip" hidden><button id="wk-prev" aria-label="Previous week">‹</button><span id="wk-label" aria-live="polite"></span><button id="wk-next" aria-label="Next week">›</button></div>
 <div class="cols" id="cols"></div>

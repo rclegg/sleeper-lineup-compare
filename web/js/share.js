@@ -1,6 +1,7 @@
 // Share links: both lineups plus season/week/league, base64-encoded into the URL hash (#d=...).
 import { $, status } from './util.js';
 import { state } from './state.js';
+import { scoringChoice } from './scoring.js';
 
 function encodeShare() {
   const data = {
@@ -8,6 +9,7 @@ function encodeShare() {
     s: $('season').value,
     w: $('week').value,
     l: state.leagueId,
+    c: scoringChoice(),
   };
   return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
 }

@@ -51,3 +51,11 @@ export function projectedPoints(id) {
 
 // Points to show for a player: actual once a stat line exists, projected for those yet to play.
 export const shownPoints = id => isProjected(id) ? projectedPoints(id) : playerPoints(id);
+
+// "X leads by 3.20" while games are still to play, "X won by 3.20" once the week (or season) is done.
+export function marginText(teams, diff) {
+  if (Math.abs(diff) < 0.005) return 'Tied';
+  const season = document.getElementById('season').value, week = document.getElementById('week').value;
+  const over = week === 'all' ? String(season) !== String(state.currentSeason) : !isUpcoming(season, week);
+  return `${teams[diff > 0 ? 0 : 1].name} ${over ? 'won' : 'leads'} by ${Math.abs(diff).toFixed(2)}`;
+}

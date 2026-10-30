@@ -2,6 +2,7 @@
 import { $, status } from './util.js';
 import { state } from './state.js';
 import { playerPoints } from './scoring.js';
+import { marginText } from './projections.js';
 import { POS } from './players.js';
 
 const W = 900, PAD = 32, ROW = 34;
@@ -59,7 +60,7 @@ export function drawMatchup() {
     if (leading) {
       ctx.fillStyle = c.accent; ctx.beginPath(); ctx.roundRect(x + colW - 72, 80, 72, 22, 11); ctx.fill();
       ctx.fillStyle = c.on; ctx.font = `800 11px ${FONT}`; ctx.textAlign = 'center';
-      ctx.fillText('LEADING', x + colW - 36, 95);
+      ctx.fillText(marginText(state.teams, 1).includes(' won ') ? 'WON' : 'LEADING', x + colW - 36, 95);
       ctx.textAlign = 'left';
     }
     ctx.fillStyle = color; ctx.fillRect(x, 104, colW, 2);
@@ -83,7 +84,7 @@ export function drawMatchup() {
   ctx.textAlign = 'center'; ctx.fillStyle = c.mute; ctx.font = `13px ${FONT}`;
   const diff = totals[0] - totals[1];
   const verdict = scored && state.teams.every(t => t.ids.length)
-    ? (Math.abs(diff) < 0.005 ? 'Tied' : `${state.teams[diff > 0 ? 0 : 1].name} leads by ${Math.abs(diff).toFixed(2)}`) : '';
+    ? marginText(state.teams, diff) : '';
   ctx.fillStyle = c.fg; ctx.font = `600 14px ${FONT}`;
   ctx.fillText(verdict, W / 2, 44);
   return canvas;

@@ -4,7 +4,8 @@ import { load } from './storage.js';
 export const state = {
   players: {},   // id -> { n: name, p: position, t: team }
   index: [],     // searchable list built from players
-  scoring: {},   // the chosen league's scoring_settings
+  scoring: {},   // the scoring rules in use: the league's, or a Standard / Half PPR / PPR preset
+  leagueScoring: null, // the loaded league's scoring_settings, or null when no league is loaded
   stats: null,   // one week's stats keyed by player id, an array of those for "all weeks", or null before scoring
   proj: null,    // projected stat lines keyed by player id when the selected week isn't over, else null
   teams: load('teams', [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }]),

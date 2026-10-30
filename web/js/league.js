@@ -7,6 +7,7 @@ import { render } from './teams.js';
 import { autofillFromLeague, fillMatchup, autofillOn } from './roster.js';
 import { loadMembers } from './members.js';
 import { refreshStrip } from './strip.js';
+import { applyScoring, scoringChoice } from './scoring.js';
 import { isUpcoming, loadProjections } from './projections.js';
 
 const isLeagueId = v => /^\d{12,}$/.test(v);
@@ -59,7 +60,7 @@ export function lookupLeagues(fill) {
   clearTimeout(lookupTimer);
   lookupTimer = setTimeout(async () => {
     const input = $('league').value.trim();
-    if (!input) { $('pick').hidden = true; return; }
+    if (!input) { $('pick').hidden = true; score(); return; }
     try {
       await resolveLeague();
       if (fill) leagueReady(true);
@@ -88,13 +89,14 @@ export async function score() {
   const mine = ++scoreRun;  // a newer score() supersedes this one, so a slow older request can't overwrite it
   const season = $('season').value;
   const week = $('week').value;
-  save('prefs', { league: $('league').value, leagueId: state.leagueId, season, week });
+  save('prefs', { league: $('league').value, leagueId: state.leagueId, season, week, scoring: scoringChoice() });
   $('go').disabled = true;
   $('go').textContent = 'Scoring…';
   $('cols').classList.add('busy');
   try {
     try {
-      await resolveLeague();
+      if ($('league').value.trim()) await resolveLeague();
+      else noLeague();
     } catch (e) {
       status(e.message, true);
       state.stats = null;
@@ -103,11 +105,14 @@ export async function score() {
       render();
       return;
     }
-    status('Loading league scoring…');
-    const league = await get('/league/' + state.leagueId);
-    if (!league || !league.scoring_settings) throw new Error('No league found for that ID');
-    state.scoring = league.scoring_settings;
-    state.flex = flexPositions(league.roster_positions);
+    if (state.leagueId) {
+      status('Loading league scoring…');
+      const league = await get('/league/' + state.leagueId);
+      if (!league || !league.scoring_settings) throw new Error('No league found for that ID');
+      state.leagueScoring = league.scoring_settings;
+      state.flex = flexPositions(league.roster_positions);
+    }
+    applyScoring();
 
     status('Loading stats…');
     let stats, proj = null;
@@ -135,6 +140,13 @@ export async function score() {
   render();
 }
 
+// No username or league: score with a preset and skip everything that needs rosters (bench, free agents, matchups).
+function noLeague() {
+  state.leagueId = ''; state.userId = ''; state.members = []; state.membersFor = ''; state.rostered = new Set();
+  state.leagueScoring = null; state.flex = null;
+  $('pick').hidden = true;
+}
+
 // Positions the league's FLEX slots accept, from its roster_positions (RB/WR/TE when it has a plain FLEX).
 function flexPositions(slots) {
   const kinds = { FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['WR', 'RB'], REC_FLEX: ['WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'] };
@@ -145,10 +157,11 @@ function flexPositions(slots) {
 
 // "Not you? Clear": forget the saved username, league and lineups.
 function clearSaved() {
-  save('prefs', { season: $('season').value, week: $('week').value });
+  save('prefs', { season: $('season').value, week: $('week').value, scoring: scoringChoice() });
   save('teams', [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }]);
   state.teams = [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }];
   state.leagueId = ''; state.userId = ''; state.members = []; state.membersFor = ''; state.stats = null;
+  state.leagueScoring = null; applyScoring();
   $('league').value = '';
   $('pick').hidden = true;
   $('clear').hidden = true;
@@ -171,14 +184,16 @@ export function initLeagueControls() {
   $('league').addEventListener('keydown', e => { if (e.key === 'Enter') lookupLeagues(true); });
   // Changing the week also loads that week's matchup (for a signed-in user with autofill on), then re-scores.
   $('week').addEventListener('change', async () => {
-    if (!state.leagueId) return;
+    if (!state.leagueId) { score(); return; }
     const week = $('week').value;
     if (state.userId && autofillOn() && week !== 'all') await fillMatchup(render, week, week);
     score();
   });
   $('season').addEventListener('change', () => {
     const input = $('league').value.trim();
-    if (input && !isLeagueId(input)) {
+    if (!input) {
+      score();
+    } else if (!isLeagueId(input)) {
       $('pick').value = '';
       lookupLeagues(true);
     } else if (state.leagueId) {

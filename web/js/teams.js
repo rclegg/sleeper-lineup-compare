@@ -5,7 +5,7 @@ import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
 import { benchHtml, initBench } from './bench.js';
-import { projectedPoints, isProjected, shownPoints } from './projections.js';
+import { projectedPoints, isProjected, shownPoints, marginText } from './projections.js';
 import { lookupRoster, applyMember } from './roster.js';
 import { weekStarters } from './members.js';
 
@@ -56,7 +56,7 @@ function teamColumn(team, i, totals) {
   const col = document.createElement('div');
   col.className = 'team';
   col.style.setProperty('--c', i ? 'var(--b)' : 'var(--a)');
-  if ((state.stats || state.proj) && team.ids.length && totals[i] > totals[1 - i]) col.classList.add('win');
+  if ((state.stats || state.proj) && team.ids.length && totals[i] > totals[1 - i]) { col.classList.add('win'); if (marginText(state.teams, totals[0] - totals[1]).includes(' won ')) col.classList.add('done'); }
 
   const missing = POS.filter(pos => !team.ids.some(id => (state.players[id] || {}).p === pos));
   const hint = team.ids.length && missing.length ? `<div class="hint">Not added yet: ${missing.join(' · ')}</div>` : '';
@@ -85,7 +85,7 @@ export function render() {
   const verdict = $('verdict');
   if ((stats || state.proj) && teams.every(t => t.ids.length)) {
     const diff = totals[0] - totals[1];
-    verdict.textContent = Math.abs(diff) < 0.005 ? 'Tied.' : `${teams[diff > 0 ? 0 : 1].name} leads by ${Math.abs(diff).toFixed(2)}${teams.some(t => t.ids.some(isProjected)) ? ' (incl. projections)' : ''}`;
+    verdict.textContent = marginText(teams, diff) + (teams.some(t => t.ids.some(isProjected)) ? ' (incl. projections)' : '');
   } else {
     verdict.textContent = '';
   }

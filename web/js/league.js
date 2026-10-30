@@ -66,18 +66,26 @@ function lastWeek() {
   return state.currentWeek && $('season').value == state.currentSeason ? Math.max(1, state.currentWeek) : DEFAULT_WEEKS;
 }
 
+function finishScoring() {
+  $('go').disabled = false;
+  $('go').textContent = 'Score';
+  $('cols').classList.remove('busy');
+}
+
 export async function score() {
   const season = $('season').value;
   const week = $('week').value;
   save('prefs', { league: $('league').value, season, week });
   $('go').disabled = true;
+  $('go').textContent = 'Scoring…';
+  $('cols').classList.add('busy');
   try {
     try {
       await resolveLeague();
     } catch (e) {
       status(e.message, true);
       state.stats = null;
-      $('go').disabled = false;
+      finishScoring();
       render();
       return;
     }
@@ -98,7 +106,7 @@ export async function score() {
     status('Could not load stats: ' + err.message, true);
     state.stats = null;
   }
-  $('go').disabled = false;
+  finishScoring();
   render();
 }
 

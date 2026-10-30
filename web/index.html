@@ -25,10 +25,12 @@
   <select id="season"></select>
   <select id="week"></select>
   <button class="primary" id="go">Score</button>
+</div>
+<div class="tools">
+  <label class="auto"><input type="checkbox" id="autofill" checked> Autofill lineups from a Sleeper username</label>
   <button id="share">Share link</button>
 </div>
-<label class="auto"><input type="checkbox" id="autofill" checked> Autofill starting lineups from a Sleeper username</label>
-<div class="status" id="status">Loading players…</div>
+<div class="status" id="status" role="status" aria-live="polite">Loading players…</div>
 <input id="shareurl" readonly hidden aria-label="Share link" style="width:100%;margin-bottom:12px">
 <p class="verdict" id="verdict"></p>
 

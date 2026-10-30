@@ -52,3 +52,37 @@ details.howto ol.how{margin:8px 0 0}
 
 .auto{display:block;margin:0 0 8px;font-size:13px;color:var(--mute)}
 .auto input{margin-right:6px}
+
+/* UX pass */
+button,select,input[type=checkbox]{touch-action:manipulation}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.team h2 input:focus-visible{outline:none;border-bottom-color:var(--fg)}
+.top button{font-size:18px;line-height:1}
+.bar{margin-bottom:8px}
+.bar select,.bar button,.bar input{min-height:40px}
+.tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tools button{padding:6px 12px;font-size:13px}
+.auto{display:flex;align-items:center;margin:0;font-size:13px;color:var(--mute);cursor:pointer}
+.auto input{margin:0 8px 0 0;width:18px;height:18px;accent-color:var(--accent)}
+.status{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.status:empty{display:none}
+.cols.busy{opacity:.55;transition:opacity .15s;pointer-events:none}
+.verdict{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;text-align:center}
+.verdict:empty{display:none}
+.team.win h2::after{content:"Leading";float:right;margin-top:-26px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--on-accent);background:var(--accent);border-radius:999px;padding:2px 9px}
+.team h2{position:relative}
+.results div{padding:11px 12px}
+.results div.active,.results div:hover{background:var(--win)}
+.results mark{background:none;color:var(--accent);font-weight:700}
+.empty{border:1px dashed var(--line);border-radius:10px;text-align:center;padding:18px 12px;line-height:1.5}
+td.x button{min-width:36px;min-height:36px}
+.who span:last-child{min-width:0;overflow-wrap:anywhere}
+@media(max-width:620px){
+  body{padding:12px}
+  .bar #league{flex:1 1 100%}
+  .bar #pick{flex:1 1 100%}
+  .bar #season,.bar #week{flex:1 1 0;min-width:0}
+  .bar #go{flex:1 1 100%;min-height:44px;font-size:16px}
+  .total{font-size:30px}
+  .verdict{position:sticky;top:8px;z-index:4;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+}

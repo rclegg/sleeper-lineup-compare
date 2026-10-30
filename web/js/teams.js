@@ -8,6 +8,13 @@ import { lookupRoster } from './roster.js';
 
 const MAX_RESULTS = 12;
 
+// Bolds the matched part of a search result name.
+function highlight(name, query) {
+  const at = name.toLowerCase().indexOf(query);
+  if (at < 0) return esc(name);
+  return esc(name.slice(0, at)) + '<mark>' + esc(name.slice(at, at + query.length)) + '</mark>' + esc(name.slice(at + query.length));
+}
+
 function avatarUrl(id, p) {
   return p.p === 'DEF'
     ? 'https://sleepercdn.com/images/team_logos/nfl/' + String(p.t || id).toLowerCase() + '.png'
@@ -31,7 +38,7 @@ function playerRow(teamIndex, id) {
   return `<tr><td><div class="who"><img class="av" src="${avatarUrl(id, p)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
     + `<span class="pos ${p.p}">${p.p}</span><span>${esc(p.n)} <small style="color:var(--mute)">${p.t}</small></span></div></td>`
     + `<td class="pts">${pts == null ? '–' : pts.toFixed(2)}</td>`
-    + `<td class="x"><button data-t="${teamIndex}" data-id="${id}" aria-label="Remove">×</button></td></tr>`;
+    + `<td class="x"><button data-t="${teamIndex}" data-id="${id}" aria-label="Remove ${esc(p.n)}">×</button></td></tr>`;
 }
 
 function teamColumn(team, i, totals) {
@@ -44,10 +51,10 @@ function teamColumn(team, i, totals) {
   const hint = team.ids.length && missing.length ? `<div class="hint">Not added yet: ${missing.join(' · ')}</div>` : '';
   const rows = sortedLineup(team.ids).map(id => playerRow(i, id)).join('');
 
-  col.innerHTML = `<h2><input value="${esc(team.name)}" data-name="${i}" aria-label="Team name"></h2>
+  col.innerHTML = `<h2><input value="${esc(team.name)}" data-name="${i}" aria-label="Team ${'AB'[i]} name"></h2>
       <div class="total">${state.stats ? totals[i].toFixed(2) : '–'}</div>
-      <div class="search"><input placeholder="Add player…" data-s="${i}"><div class="results" hidden></div></div>
-      ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet. Search above to add.</div>'}`;
+      <div class="search"><input placeholder="Add player…" data-s="${i}" aria-label="Search players to add to team ${'AB'[i]}" autocomplete="off"><div class="results" hidden></div></div>
+      ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}`;
   return col;
 }
 
@@ -79,10 +86,36 @@ export function initTeamEditing() {
       return;
     }
     const result = e.target.closest('.results div[data-id]');
-    if (result) {
-      const team = state.teams[+result.dataset.t];
-      if (!team.ids.includes(result.dataset.id)) team.ids.push(result.dataset.id);
-      persist();
+    if (result) addPlayer(+result.dataset.t, result.dataset.id);
+  });
+
+  // Adds a player, then puts the cursor back in that team's search box for the next one.
+  function addPlayer(t, id) {
+    const team = state.teams[t];
+    if (!team.ids.includes(id)) team.ids.push(id);
+    persist();
+    const box = document.querySelector(`[data-s="${t}"]`);
+    if (box) box.focus();
+  }
+
+  // Arrow keys move through search results, Enter adds, Escape closes.
+  $('cols').addEventListener('keydown', e => {
+    const input = e.target;
+    if (input.dataset.s == null) return;
+    const box = input.nextElementSibling;
+    const items = [...box.querySelectorAll('div[data-id]')];
+    const current = items.findIndex(x => x.classList.contains('active'));
+    if (e.key === 'Escape') { box.hidden = true; return; }
+    if (box.hidden || !items.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = (current + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items.forEach((x, k) => x.classList.toggle('active', k === next));
+      items[next].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const pick = items[current < 0 ? 0 : current];
+      addPlayer(+pick.dataset.t, pick.dataset.id);
     }
   });
 
@@ -101,7 +134,7 @@ export function initTeamEditing() {
     if (query.length < 2) { box.hidden = true; return; }
     const hits = state.index.filter(p => p.l.includes(query)).slice(0, MAX_RESULTS);
     box.innerHTML = hits
-      .map(p => `<div data-id="${p.id}" data-t="${searchIndex}"><span>${esc(p.n)}</span><small>${p.p} ${p.t}</small></div>`)
+      .map(p => `<div data-id="${p.id}" data-t="${searchIndex}"><span>${highlight(p.n, query)}</span><small>${p.p} ${p.t}</small></div>`)
       .join('') || '<div>No match</div>';
     box.hidden = false;
   });

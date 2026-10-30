@@ -35,6 +35,9 @@ export function initShare() {
     try {
       await navigator.clipboard.writeText(url);
       status('Link copied. Send it to your friend.');
+      const label = $('share').textContent;
+      $('share').textContent = 'Copied ✓';
+      setTimeout(() => { $('share').textContent = label; }, 1800);
     } catch (e) {
       status('Copy the link below and send it to your friend.');
     }

@@ -3,12 +3,14 @@ import { $ } from './util.js';
 import { load, save } from './storage.js';
 
 const THEMES = ['auto', 'light', 'dark'];
+const ICONS = { auto: '◐', light: '☀', dark: '☾' };
 
 function applyTheme(theme) {
   const root = document.documentElement;
   if (theme === 'auto') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', theme);
   $('theme').title = 'Theme: ' + theme + ' (tap to change)';
+  $('theme').textContent = ICONS[theme];
 }
 
 export function initTheme() {

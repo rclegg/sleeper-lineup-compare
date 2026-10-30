@@ -35,6 +35,15 @@ export async function loadProjections(season, week) {
   return null;
 }
 
+// True once a player has a recorded stat line for the loaded week (game played or in progress).
+function hasPlayed(id) {
+  const line = state.stats && !Array.isArray(state.stats) && state.stats[id];
+  return !!line && (line.gp > 0 || Object.values(line).some(v => typeof v === 'number' && v !== 0));
+}
+
+// Whether this player's shown points are projections: projections loaded and no actual stats yet.
+export const isProjected = id => !!state.proj && !hasPlayed(id);
+
 // Projected points for a player, or null when projections aren't loaded.
 export function projectedPoints(id) {
   return state.proj ? points(state.proj[id]) : null;

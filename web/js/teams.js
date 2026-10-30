@@ -5,14 +5,20 @@ import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
 import { benchHtml, initBench } from './bench.js';
-import { projectedPoints } from './projections.js';
+import { projectedPoints, isProjected } from './projections.js';
 import { lookupRoster, applyMember } from './roster.js';
 import { weekStarters } from './members.js';
 
 const MAX_RESULTS = 12;
 
-// Projected points when the week is unplayed and projections loaded, else actual points.
-const shownPoints = id => state.proj ? projectedPoints(id) : playerPoints(id);
+// Actual points once a player has a recorded stat line; projections only for those who haven't played yet.
+const shownPoints = id => isProjected(id) ? projectedPoints(id) : playerPoints(id);
+
+// Label for a team total: all projected, a mix of actual and projected, or nothing for all actual.
+function totalTag(ids) {
+  const n = ids.filter(isProjected).length;
+  return !n ? '' : `<small class="tag">${n === ids.length ? 'projected' : 'incl. proj'}</small>`;
+}
 
 // Bolds the matched part of a search result name.
 function highlight(name, query) {
@@ -43,7 +49,7 @@ function playerRow(teamIndex, id) {
   const pts = shownPoints(id);
   return `<tr><td><div class="who"><img class="av" src="${avatarUrl(id, p)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
     + `<span class="pos ${p.p}">${p.p}</span><span>${esc(p.n)} <small style="color:var(--mute)">${p.t}</small></span></div></td>`
-    + `<td class="pts${state.proj ? ' proj' : ''}">${pts == null ? '–' : pts.toFixed(2)}${state.proj ? '<small class="tag">proj</small>' : ''}</td>`
+    + `<td class="pts${isProjected(id) ? ' proj' : ''}">${pts == null ? '–' : pts.toFixed(2)}${isProjected(id) ? '<small class="tag">proj</small>' : ''}</td>`
     + `<td class="x"><button data-t="${teamIndex}" data-id="${id}" aria-label="Remove ${esc(p.n)}">×</button></td></tr>`;
 }
 
@@ -63,7 +69,7 @@ function teamColumn(team, i, totals) {
     : '';
   col.innerHTML = `<h2><input value="${esc(team.name)}" data-name="${i}" aria-label="Team ${'AB'[i]} name"></h2>
       ${fill}
-      <div class="total">${state.stats || state.proj ? totals[i].toFixed(2) : '–'}${state.proj ? '<small class="tag">projected</small>' : ''}</div>
+      <div class="total">${state.stats || state.proj ? totals[i].toFixed(2) : '–'}${totalTag(team.ids)}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}" aria-label="Search players to add to team ${'AB'[i]}" autocomplete="off"><div class="results" hidden></div></div>
       ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}
       ${benchHtml(team, i)}`;
@@ -80,7 +86,7 @@ export function render() {
   const verdict = $('verdict');
   if ((stats || state.proj) && teams.every(t => t.ids.length)) {
     const diff = totals[0] - totals[1];
-    verdict.textContent = Math.abs(diff) < 0.005 ? 'Tied.' : `${teams[diff > 0 ? 0 : 1].name} leads by ${Math.abs(diff).toFixed(2)}${state.proj ? ' (projected)' : ''}`;
+    verdict.textContent = Math.abs(diff) < 0.005 ? 'Tied.' : `${teams[diff > 0 ? 0 : 1].name} leads by ${Math.abs(diff).toFixed(2)}${teams.some(t => t.ids.some(isProjected)) ? ' (incl. projections)' : ''}`;
   } else {
     verdict.textContent = '';
   }

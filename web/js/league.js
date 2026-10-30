@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { get } from './sleeper.js';
 import { save, load } from './storage.js';
 import { render } from './teams.js';
-import { autofillFromLeague } from './roster.js';
+import { autofillFromLeague, fillMatchup, autofillOn } from './roster.js';
 import { loadMembers } from './members.js';
 import { refreshStrip } from './strip.js';
 import { isUpcoming, loadProjections } from './projections.js';
@@ -82,7 +82,10 @@ function finishScoring() {
   refreshStrip();
 }
 
+let scoreRun = 0;
+
 export async function score() {
+  const mine = ++scoreRun;  // a newer score() supersedes this one, so a slow older request can't overwrite it
   const season = $('season').value;
   const week = $('week').value;
   save('prefs', { league: $('league').value, leagueId: state.leagueId, season, week });
@@ -106,19 +109,23 @@ export async function score() {
     state.scoring = league.scoring_settings;
 
     status('Loading stats…');
-    state.proj = null;
+    let stats, proj = null;
     if (isUpcoming(season, week)) {
       // Unplayed week: stats may be empty or missing, so projections are the main data.
-      state.stats = await get(`/stats/nfl/regular/${season}/${week}`).catch(() => ({}));
-      state.proj = await loadProjections(season, week);
+      stats = await get(`/stats/nfl/regular/${season}/${week}`).catch(() => ({}));
+      proj = await loadProjections(season, week);
     } else if (week === 'all') {
       const weeks = Array.from({ length: +lastWeek() }, (_, i) => get(`/stats/nfl/regular/${season}/${i + 1}`).catch(() => ({})));
-      state.stats = await Promise.all(weeks);
+      stats = await Promise.all(weeks);
     } else {
-      state.stats = await get(`/stats/nfl/regular/${season}/${week}`);
+      stats = await get(`/stats/nfl/regular/${season}/${week}`);
     }
+    if (mine !== scoreRun) return;
+    state.stats = stats;
+    state.proj = proj;
     status((week === 'all' ? `Season ${season}, all weeks` : `Season ${season}, week ${week}`) + (state.proj ? ' (projected)' : ''));
   } catch (err) {
+    if (mine !== scoreRun) return;
     status('Could not load stats: ' + err.message, true);
     state.stats = null;
     state.proj = null;
@@ -153,7 +160,13 @@ export function initLeagueControls() {
     lookupLeagues(true);
   });
   $('league').addEventListener('keydown', e => { if (e.key === 'Enter') lookupLeagues(true); });
-  $('week').addEventListener('change', () => { if (state.leagueId) score(); });
+  // Changing the week also loads that week's matchup (for a signed-in user with autofill on), then re-scores.
+  $('week').addEventListener('change', async () => {
+    if (!state.leagueId) return;
+    const week = $('week').value;
+    if (state.userId && autofillOn() && week !== 'all') await fillMatchup(render, week, week);
+    score();
+  });
   $('season').addEventListener('change', () => {
     const input = $('league').value.trim();
     if (input && !isLeagueId(input)) {

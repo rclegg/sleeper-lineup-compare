@@ -4,6 +4,7 @@ import { state } from './state.js';
 import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
+import { lookupRoster } from './roster.js';
 
 const MAX_RESULTS = 12;
 
@@ -90,6 +91,7 @@ export function initTeamEditing() {
     if (nameIndex != null) {
       state.teams[+nameIndex].name = e.target.value;
       save('teams', state.teams);
+      lookupRoster(+nameIndex, render);
       return;
     }
     const searchIndex = e.target.dataset.s;

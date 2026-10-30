@@ -12,6 +12,7 @@ Pick any players for Team A and Team B, choose a season and week (or a season to
 
 - One static page, no build step and no dependencies: `web/index.html`, `web/styles.css`, and ES modules (`web/app.js` is the entry point, with the pieces in `web/js/`: Sleeper API, player cache, scoring, team rendering, league lookup, share links, theme).
 - Enter a Sleeper username (it lists your leagues) or a league ID. There is no default league.
+- Type a Sleeper username (or a team name from the loaded league) as a team's name and its starting lineup fills in. With a league loaded it uses that league; otherwise it uses the user's only league that season.
 - Data comes live from the public [Sleeper API](https://docs.sleeper.com/) (league scoring, player list, weekly stats). No keys needed.
 - The player list is cached in `localStorage` for a day. Lineups and preferences are saved there too.
 - Share links keep state in the URL hash (`#d=...`), so nothing is sent to a server.

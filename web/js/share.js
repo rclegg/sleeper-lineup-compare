@@ -7,7 +7,7 @@ function encodeShare() {
   const data = {
     t: state.teams.map(t => ({ n: t.name, i: t.ids })),
     s: $('season').value,
-    w: $('week').value,
+    w: Number($('week').value) === state.currentWeek && $('season').value === state.currentSeason ? '' : $('week').value,  // blank = open on the current week
     l: state.leagueId,
     c: scoringChoice(),
   };

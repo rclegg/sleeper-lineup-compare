@@ -3,7 +3,7 @@
 import { $, status } from './js/util.js';
 import { state } from './js/state.js';
 import { get } from './js/sleeper.js';
-import { load } from './js/storage.js';
+import { load, save } from './js/storage.js';
 import { loadPlayers, buildIndex } from './js/players.js';
 import { render, initTeamEditing } from './js/teams.js';
 import { initLeagueControls, lookupLeagues, score } from './js/league.js';
@@ -21,9 +21,10 @@ const WEEKS_IN_SEASON = 18;
 async function setupPickers(pref) {
   let season = new Date().getFullYear(), week = 1;
   try {
-    const nflState = await get('/state/nfl');
+    const nflState = await get('/state/nfl', { cache: 'no-store' });
     season = +nflState.season;
-    week = +nflState.display_week || +nflState.week || 1;
+    // week, display_week and leg can disagree around game days; the latest of them is the current week.
+    week = Math.max(+nflState.display_week || 0, +nflState.week || 0, +nflState.leg || 0) || 1;
     state.currentSeason = String(season);
     state.currentWeek = week;
   } catch (e) { /* offline: fall back to the calendar year */ }
@@ -50,6 +51,9 @@ async function init() {
     }));
     if (shared.s) pref.season = shared.s;
     if (shared.w) pref.week = shared.w;
+    // The link has been applied; keep the lineups but drop the hash so a reload (or a bookmark) opens on the current week.
+    save('teams', state.teams);
+    history.replaceState(null, '', location.pathname + location.search);
     if (shared.l) pref.league = shared.l;
     if (shared.c) setScoringChoice(shared.c);
   }

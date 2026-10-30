@@ -107,6 +107,7 @@ export async function score() {
     const league = await get('/league/' + state.leagueId);
     if (!league || !league.scoring_settings) throw new Error('No league found for that ID');
     state.scoring = league.scoring_settings;
+    state.flex = flexPositions(league.roster_positions);
 
     status('Loading stats…');
     let stats, proj = null;
@@ -132,6 +133,14 @@ export async function score() {
   }
   finishScoring();
   render();
+}
+
+// Positions the league's FLEX slots accept, from its roster_positions (RB/WR/TE when it has a plain FLEX).
+function flexPositions(slots) {
+  const kinds = { FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['WR', 'RB'], REC_FLEX: ['WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'] };
+  const set = new Set();
+  (slots || []).forEach(s => (kinds[s] || []).forEach(p => set.add(p)));
+  return set.size ? ['QB', 'RB', 'WR', 'TE'].filter(p => set.has(p)) : kinds.FLEX;
 }
 
 // "Not you? Clear": forget the saved username, league and lineups.

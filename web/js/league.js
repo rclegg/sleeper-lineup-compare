@@ -6,6 +6,7 @@ import { save } from './storage.js';
 import { render } from './teams.js';
 import { autofillFromLeague } from './roster.js';
 import { loadMembers } from './members.js';
+import { refreshStrip } from './strip.js';
 
 const isLeagueId = v => /^\d{12,}$/.test(v);
 const LOOKUP_DELAY_MS = 600;
@@ -77,6 +78,7 @@ function finishScoring() {
   $('go').disabled = false;
   $('go').textContent = 'Refresh scores';
   $('cols').classList.remove('busy');
+  refreshStrip();
 }
 
 export async function score() {

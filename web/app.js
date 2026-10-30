@@ -10,6 +10,7 @@ import { initLeagueControls, lookupLeagues, score } from './js/league.js';
 import { readShared, initShare } from './js/share.js';
 import { initTheme } from './js/theme.js';
 import { initAutofillToggle } from './js/roster.js';
+import { initStrip } from './js/strip.js';
 
 const SEASONS_SHOWN = 4;
 const WEEKS_IN_SEASON = 18;
@@ -65,5 +66,6 @@ initTeamEditing();
 initLeagueControls();
 initShare();
 initAutofillToggle();
+initStrip();
 initTheme();
 init();

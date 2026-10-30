@@ -5,6 +5,7 @@ import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
 import { lookupRoster, applyMember } from './roster.js';
+import { weekStarters } from './members.js';
 
 const MAX_RESULTS = 12;
 
@@ -94,10 +95,13 @@ export function initTeamEditing() {
     if (result) addPlayer(+result.dataset.t, result.dataset.id);
   });
 
-  $('cols').addEventListener('change', e => {
+  $('cols').addEventListener('change', async e => {
     if (e.target.dataset.fill == null || !e.target.value) return;
     const member = state.members.find(m => String(m.rosterId) === e.target.value);
-    if (member) applyMember(+e.target.dataset.fill, member, true);
+    if (member) {
+      const starters = await weekStarters(state.leagueId, member.rosterId, member.starters, $('season').value, $('week').value);
+      applyMember(+e.target.dataset.fill, { ...member, starters }, true);
+    }
     render();
   });
 

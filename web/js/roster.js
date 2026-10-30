@@ -4,11 +4,12 @@ import { status } from './util.js';
 import { state } from './state.js';
 import { get } from './sleeper.js';
 import { save, load } from './storage.js';
-import { opponentOf } from './members.js';
+import { opponentOf, weekStarters, isPastWeek } from './members.js';
 
 const LOOKUP_DELAY_MS = 700;
 export const autofillOn = () => load('autofill', true) !== false;
 
+const weekPicked = () => document.getElementById('week').value;
 const timers = [];
 const latest = [];
 
@@ -31,7 +32,8 @@ async function startersFor(name, season) {
     const rosters = await get(`/league/${leagueId}/rosters`);
     const roster = (rosters || []).find(r => r.owner_id === user.user_id);
     if (!roster) return { error: `${user.display_name || name} has no team in that league.` };
-    return { ids: roster.starters || [], who: user.display_name || name };
+    const ids = await weekStarters(leagueId, roster.roster_id, roster.starters || [], season, weekPicked());
+    return { ids, who: user.display_name || name };
   }
 
   if (!state.leagueId) return null;
@@ -39,7 +41,9 @@ async function startersFor(name, season) {
   const owner = (users || []).find(u => [u.display_name, u.username, (u.metadata || {}).team_name]
     .some(v => v && v.toLowerCase() === wanted));
   const roster = owner && (rosters || []).find(r => r.owner_id === owner.user_id);
-  return roster ? { ids: roster.starters || [], who: owner.display_name || name } : null;
+  if (!roster) return null;
+  const ids = await weekStarters(state.leagueId, roster.roster_id, roster.starters || [], season, weekPicked());
+  return { ids, who: owner.display_name || name };
 }
 
 // Looks the name up and, if it resolves and this is still the latest request, fills the team.
@@ -82,22 +86,35 @@ export function applyMember(teamIndex, member, force) {
   save('teams', state.teams);
 }
 
-// With a username in the league box: Team A becomes that manager and Team B their opponent this week.
-export async function autofillFromLeague(render) {
-  if (!autofillOn() || !state.userId) return;
+// Puts a manager in a team with the lineup they actually started in a past week (current starters otherwise).
+async function applyMemberWeek(teamIndex, member, season, picked) {
+  const starters = await weekStarters(state.leagueId, member.rosterId, member.starters, season, picked);
+  applyMember(teamIndex, { ...member, starters }, true);
+}
+
+// Team A becomes the signed-in user and Team B their opponent in `week`; `picked` is the Week select value.
+export async function fillMatchup(render, week, picked) {
   const me = state.members.find(m => m.userId === state.userId);
   if (!me) return;
-  applyMember(0, me, true);
-  render();
-  // Team B is this week's opponent (not the scoring week, which defaults to last week).
   const season = document.getElementById('season').value;
-  const picked = document.getElementById('week').value;
-  const week = season === state.currentSeason && state.currentWeek ? state.currentWeek : picked === 'all' ? 1 : picked;
+  await applyMemberWeek(0, me, season, picked);
+  render();
   let opponent = null;
   try { opponent = await opponentOf(me.rosterId, week); } catch (e) { /* no matchup data */ }
-  if (opponent) applyMember(1, opponent, true);
+  if (opponent) await applyMemberWeek(1, opponent, season, picked);
   render();
   status(opponent ? `${me.name} vs ${opponent.name}` : `Loaded ${me.name}'s starting lineup.`);
+}
+
+// With a username in the league box: Team A becomes that manager and Team B their opponent.
+export async function autofillFromLeague(render) {
+  if (!autofillOn() || !state.userId) return;
+  // A past week uses that week's matchup; otherwise this week's opponent (not the scoring week, which defaults to last week).
+  const season = document.getElementById('season').value;
+  const picked = weekPicked();
+  const past = isPastWeek(season, picked);
+  const week = past ? picked : season === state.currentSeason && state.currentWeek ? state.currentWeek : picked === 'all' ? 1 : picked;
+  await fillMatchup(render, week, picked);
 }
 
 export function initAutofillToggle() {

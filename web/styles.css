@@ -97,3 +97,10 @@ button#go{background:none}
   .tools{flex-direction:column;align-items:stretch}
   .btns button{flex:1}
 }
+
+/* Weekly matchup strip */
+.strip{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:12px}
+.strip[hidden]{display:none}
+.strip button{min-width:44px;min-height:40px;padding:0;font-size:20px;line-height:1;border:none;background:none}
+.strip button:disabled{opacity:.35;cursor:default}
+#wk-label{flex:1;text-align:center;font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}

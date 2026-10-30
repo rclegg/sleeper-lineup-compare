@@ -3,7 +3,7 @@ import { state } from './state.js';
 const round2 = n => Math.round(n * 100) / 100;
 
 // Points for one stat line under the league's scoring settings.
-function points(statLine) {
+export function points(statLine) {
   if (!statLine) return 0;
   let total = 0;
   for (const key in state.scoring) {

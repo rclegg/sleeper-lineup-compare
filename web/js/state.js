@@ -6,6 +6,7 @@ export const state = {
   index: [],     // searchable list built from players
   scoring: {},   // the chosen league's scoring_settings
   stats: null,   // one week's stats keyed by player id, an array of those for "all weeks", or null before scoring
+  proj: null,    // projected stat lines keyed by player id when the selected week isn't over, else null
   teams: load('teams', [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }]),
   leagueId: '',
   userId: '',         // Sleeper user_id when the league box holds a username (not a league ID)

@@ -5,10 +5,14 @@ import { save } from './storage.js';
 import { POS } from './players.js';
 import { playerPoints } from './scoring.js';
 import { benchHtml, initBench } from './bench.js';
+import { projectedPoints } from './projections.js';
 import { lookupRoster, applyMember } from './roster.js';
 import { weekStarters } from './members.js';
 
 const MAX_RESULTS = 12;
+
+// Projected points when the week is unplayed and projections loaded, else actual points.
+const shownPoints = id => state.proj ? projectedPoints(id) : playerPoints(id);
 
 // Bolds the matched part of a search result name.
 function highlight(name, query) {
@@ -29,17 +33,17 @@ function sortedLineup(ids) {
   return [...ids].sort((x, y) => {
     const px = players[x] || {}, py = players[y] || {};
     return (POS.indexOf(px.p) + 1 || 99) - (POS.indexOf(py.p) + 1 || 99)
-      || (playerPoints(y) || 0) - (playerPoints(x) || 0)
+      || (shownPoints(y) || 0) - (shownPoints(x) || 0)
       || String(px.n).localeCompare(py.n);
   });
 }
 
 function playerRow(teamIndex, id) {
   const p = state.players[id] || { n: id, p: '', t: '' };
-  const pts = playerPoints(id);
+  const pts = shownPoints(id);
   return `<tr><td><div class="who"><img class="av" src="${avatarUrl(id, p)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
     + `<span class="pos ${p.p}">${p.p}</span><span>${esc(p.n)} <small style="color:var(--mute)">${p.t}</small></span></div></td>`
-    + `<td class="pts">${pts == null ? '–' : pts.toFixed(2)}</td>`
+    + `<td class="pts${state.proj ? ' proj' : ''}">${pts == null ? '–' : pts.toFixed(2)}${state.proj ? '<small class="tag">proj</small>' : ''}</td>`
     + `<td class="x"><button data-t="${teamIndex}" data-id="${id}" aria-label="Remove ${esc(p.n)}">×</button></td></tr>`;
 }
 
@@ -47,7 +51,7 @@ function teamColumn(team, i, totals) {
   const col = document.createElement('div');
   col.className = 'team';
   col.style.setProperty('--c', i ? 'var(--b)' : 'var(--a)');
-  if (state.stats && team.ids.length && totals[i] > totals[1 - i]) col.classList.add('win');
+  if ((state.stats || state.proj) && team.ids.length && totals[i] > totals[1 - i]) col.classList.add('win');
 
   const missing = POS.filter(pos => !team.ids.some(id => (state.players[id] || {}).p === pos));
   const hint = team.ids.length && missing.length ? `<div class="hint">Not added yet: ${missing.join(' · ')}</div>` : '';
@@ -59,7 +63,7 @@ function teamColumn(team, i, totals) {
     : '';
   col.innerHTML = `<h2><input value="${esc(team.name)}" data-name="${i}" aria-label="Team ${'AB'[i]} name"></h2>
       ${fill}
-      <div class="total">${state.stats ? totals[i].toFixed(2) : '–'}</div>
+      <div class="total">${state.stats || state.proj ? totals[i].toFixed(2) : '–'}${state.proj ? '<small class="tag">projected</small>' : ''}</div>
       <div class="search"><input placeholder="Add player…" data-s="${i}" aria-label="Search players to add to team ${'AB'[i]}" autocomplete="off"><div class="results" hidden></div></div>
       ${rows ? `<table>${rows}</table>${hint}` : '<div class="empty">No players yet.<br>Search above to add, or type a Sleeper username as the team name.</div>'}
       ${benchHtml(team, i)}`;
@@ -70,13 +74,13 @@ export function render() {
   const { teams, stats } = state;
   const cols = $('cols');
   cols.innerHTML = '';
-  const totals = teams.map(t => t.ids.reduce((sum, id) => sum + (playerPoints(id) || 0), 0));
+  const totals = teams.map(t => t.ids.reduce((sum, id) => sum + (shownPoints(id) || 0), 0));
   teams.forEach((team, i) => cols.appendChild(teamColumn(team, i, totals)));
 
   const verdict = $('verdict');
-  if (stats && teams.every(t => t.ids.length)) {
+  if ((stats || state.proj) && teams.every(t => t.ids.length)) {
     const diff = totals[0] - totals[1];
-    verdict.textContent = Math.abs(diff) < 0.005 ? 'Tied.' : `${teams[diff > 0 ? 0 : 1].name} leads by ${Math.abs(diff).toFixed(2)}`;
+    verdict.textContent = Math.abs(diff) < 0.005 ? 'Tied.' : `${teams[diff > 0 ? 0 : 1].name} leads by ${Math.abs(diff).toFixed(2)}${state.proj ? ' (projected)' : ''}`;
   } else {
     verdict.textContent = '';
   }

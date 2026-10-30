@@ -7,6 +7,7 @@ import { render } from './teams.js';
 import { autofillFromLeague } from './roster.js';
 import { loadMembers } from './members.js';
 import { refreshStrip } from './strip.js';
+import { isUpcoming, loadProjections } from './projections.js';
 
 const isLeagueId = v => /^\d{12,}$/.test(v);
 const LOOKUP_DELAY_MS = 600;
@@ -94,6 +95,7 @@ export async function score() {
     } catch (e) {
       status(e.message, true);
       state.stats = null;
+      state.proj = null;
       finishScoring();
       render();
       return;
@@ -104,16 +106,22 @@ export async function score() {
     state.scoring = league.scoring_settings;
 
     status('Loading stats…');
-    if (week === 'all') {
+    state.proj = null;
+    if (isUpcoming(season, week)) {
+      // Unplayed week: stats may be empty or missing, so projections are the main data.
+      state.stats = await get(`/stats/nfl/regular/${season}/${week}`).catch(() => ({}));
+      state.proj = await loadProjections(season, week);
+    } else if (week === 'all') {
       const weeks = Array.from({ length: +lastWeek() }, (_, i) => get(`/stats/nfl/regular/${season}/${i + 1}`).catch(() => ({})));
       state.stats = await Promise.all(weeks);
     } else {
       state.stats = await get(`/stats/nfl/regular/${season}/${week}`);
     }
-    status(week === 'all' ? `Season ${season}, all weeks` : `Season ${season}, week ${week}`);
+    status((week === 'all' ? `Season ${season}, all weeks` : `Season ${season}, week ${week}`) + (state.proj ? ' (projected)' : ''));
   } catch (err) {
     status('Could not load stats: ' + err.message, true);
     state.stats = null;
+    state.proj = null;
   }
   finishScoring();
   render();

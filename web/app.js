@@ -8,6 +8,7 @@ import { loadPlayers, buildIndex } from './js/players.js';
 import { render, initTeamEditing } from './js/teams.js';
 import { initLeagueControls, lookupLeagues, score } from './js/league.js';
 import { readShared, initShare } from './js/share.js';
+import { initImage } from './js/image.js';
 import { initTheme } from './js/theme.js';
 import { initAutofillToggle } from './js/roster.js';
 import { initStrip } from './js/strip.js';
@@ -49,6 +50,7 @@ async function init() {
     if (shared.l) pref.league = shared.l;
   }
   $('league').value = pref.league || '';
+  $('clear').hidden = !$('league').value;
   await setupPickers(pref);
 
   try {
@@ -65,6 +67,7 @@ async function init() {
 initTeamEditing();
 initLeagueControls();
 initShare();
+initImage();
 initAutofillToggle();
 initStrip();
 initTheme();

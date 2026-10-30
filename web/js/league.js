@@ -2,7 +2,7 @@
 import { $, status, esc } from './util.js';
 import { state } from './state.js';
 import { get } from './sleeper.js';
-import { save } from './storage.js';
+import { save, load } from './storage.js';
 import { render } from './teams.js';
 import { autofillFromLeague } from './roster.js';
 import { loadMembers } from './members.js';
@@ -34,7 +34,7 @@ async function resolveLeague() {
   const leagues = await get(`/user/${user.user_id}/leagues/nfl/${season}`);
   if (!leagues || !leagues.length) throw new Error(input + ' has no leagues in ' + season);
 
-  const previous = pick.value;
+  const previous = pick.value || load('prefs', {}).leagueId;
   pick.innerHTML = (leagues.length > 1 ? '<option value="">Choose a league…</option>' : '')
     + leagues.map(l => `<option value="${l.league_id}">${esc(l.name)}</option>`).join('');
   if (leagues.some(l => l.league_id === previous)) pick.value = previous;
@@ -84,7 +84,7 @@ function finishScoring() {
 export async function score() {
   const season = $('season').value;
   const week = $('week').value;
-  save('prefs', { league: $('league').value, season, week });
+  save('prefs', { league: $('league').value, leagueId: state.leagueId, season, week });
   $('go').disabled = true;
   $('go').textContent = 'Scoring…';
   $('cols').classList.add('busy');
@@ -119,12 +119,27 @@ export async function score() {
   render();
 }
 
+// "Not you? Clear": forget the saved username, league and lineups.
+function clearSaved() {
+  save('prefs', { season: $('season').value, week: $('week').value });
+  save('teams', [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }]);
+  state.teams = [{ name: 'Team A', ids: [] }, { name: 'Team B', ids: [] }];
+  state.leagueId = ''; state.userId = ''; state.members = []; state.membersFor = ''; state.stats = null;
+  $('league').value = '';
+  $('pick').hidden = true;
+  $('clear').hidden = true;
+  render();
+  status('Cleared. Enter a Sleeper username to start.');
+}
+
 export function initLeagueControls() {
+  $('clear').addEventListener('click', clearSaved);
   $('pick').addEventListener('change', () => {
     state.leagueId = $('pick').value;
     if (state.leagueId) leagueReady(true);
   });
   $('league').addEventListener('input', () => {
+    $('clear').hidden = !$('league').value.trim();
     $('pick').hidden = true;
     state.leagueId = '';
     lookupLeagues(true);

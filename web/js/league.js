@@ -106,6 +106,8 @@ export async function score() {
       return;
     }
     if (state.leagueId) {
+      // A share link or saved league skips the lookup flow, so make sure the managers (bench, free agents) are loaded.
+      await loadMembers(state.leagueId).catch(() => {});
       status('Loading league scoring…');
       const league = await get('/league/' + state.leagueId);
       if (!league || !league.scoring_settings) throw new Error('No league found for that ID');

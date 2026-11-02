@@ -12,7 +12,12 @@ let faCache = null;
 // The league manager a team was filled from (matched by team name), or null.
 const memberOf = team => {
   const n = team.name.trim().toLowerCase();
-  return state.members.find(m => m.name.toLowerCase() === n || (m.owner && m.owner.toLowerCase() === n)) || null;
+  const byName = state.members.find(m => m.name.toLowerCase() === n || (m.owner && m.owner.toLowerCase() === n));
+  if (byName || !team.ids.length) return byName || null;
+  // Renamed team (e.g. from a share link): the manager whose roster holds most of this lineup.
+  const fit = m => team.ids.filter(id => m.players.includes(id)).length;
+  const best = state.members.reduce((a, m) => (!a || fit(m) > fit(a) ? m : a), null);
+  return best && fit(best) >= Math.ceil(team.ids.length / 2) ? best : null;
 };
 
 const byPoints = ids => ids.map(id => ({ id, pts: shownPoints(id) || 0 })).sort((a, b) => b.pts - a.pts);
